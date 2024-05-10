@@ -33,6 +33,8 @@ jobs:
         run: chmod +x ./gradlew
       - name: build
         run: ./gradlew build
+      - name: make source
+        run: ./gradlew build
       - name: capture build artifacts
         # Upload all artifacts
         uses: actions/upload-artifact@v3

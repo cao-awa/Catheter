@@ -32,7 +32,7 @@ repositories {
         url = "https://maven.pkg.github.com/cao-awa/Sinuatum"
         credentials {
             username = "cao-awa"
-            password = "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"
+            password = "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"
         }
     }
 }
@@ -48,4 +48,13 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+task sourceJar(type: Jar, dependsOn: classes) {
+    archiveClassifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourceJar
 }
