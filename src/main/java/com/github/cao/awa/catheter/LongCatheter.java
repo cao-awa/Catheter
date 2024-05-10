@@ -610,7 +610,7 @@ public class LongCatheter {
     }
 
     private long fetch(int index) {
-        return this.targets[index];
+        return this.targets[Math.min(index, this.targets.length - 1)];
     }
 
     private void fetch(int index, long item) {
@@ -652,14 +652,16 @@ public class LongCatheter {
         final int inputHeight = input.count() / inputWidth;
         final int sourceHeight = count() / width;
 
+        boolean homoMatrix = inputHeight == sourceHeight && width == inputWidth;
+
         // 矩阵计算时 A(h, w) B(h, w) 中的 A(w) 必须等于 B(h)
         // 其中 h 是高度而 w 是宽度，因此自身的 width 必须等于输入的 height
-        if (width != inputHeight) {
+        if (width != inputHeight && !homoMatrix) {
             throw new IllegalArgumentException("The matrix cannot be constructed because input height does not match to source width");
         }
 
         // 创建矩阵，大小是 A(h)B(w)
-        final LongCatheter newMatrix = LongCatheter.makeCapacity(sourceHeight * inputWidth);
+        final LongCatheter newMatrix = LongCatheter.makeCapacity(homoMatrix ? sourceHeight * width : sourceHeight * inputWidth);
 
         // 后续需要使用 flock 累加 flocks 的数据
         final LongCatheter flockingCatheter = LongCatheter.makeCapacity(width);

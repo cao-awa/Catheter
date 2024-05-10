@@ -650,7 +650,7 @@ public class Catheter<T> {
     }
 
     private T fetch(int index) {
-        return this.targets[index];
+        return this.targets[Math.min(index, this.targets.length - 1)];
     }
 
     private void fetch(int index, T item) {
@@ -692,14 +692,16 @@ public class Catheter<T> {
         final int inputHeight = input.count() / inputWidth;
         final int sourceHeight = count() / width;
 
+        boolean homoMatrix = inputHeight == sourceHeight && width == inputWidth;
+
         // 矩阵计算时 A(h, w) B(h, w) 中的 A(w) 必须等于 B(h)
         // 其中 h 是高度而 w 是宽度，因此自身的 width 必须等于输入的 height
-        if (width != inputHeight) {
+        if (width != inputHeight && !homoMatrix) {
             throw new IllegalArgumentException("The matrix cannot be constructed because input height does not match to source width");
         }
 
         // 创建矩阵，大小是 A(h)B(w)
-        final Catheter<Y> newMatrix = Catheter.makeCapacity(sourceHeight * inputWidth);
+        final Catheter<T> newMatrix = Catheter.makeCapacity(homoMatrix ? sourceHeight * width : sourceHeight * inputWidth);
 
         // 后续需要使用 flock 累加 flocks 的数据
         final Catheter<Y> flockingCatheter = Catheter.makeCapacity(width);
@@ -752,6 +754,27 @@ public class Catheter<T> {
             // 对矩阵的每个参数累加对应列的结果
             return flockingCatheter.flock((current, next) -> combineFlocked.apply(pos, current, next));
         });
+    }
+
+    public Catheter<T> matrixTranspose(final int width) {
+        if (!(count() > 0 && count() % width == 0)) {
+            throw new IllegalArgumentException("The elements does not is a matrix");
+        }
+
+        final int height = count() / width;
+
+        final T[] newDelegate = array(this.targets.length);
+        int newDelegateIndex = 0;
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                newDelegate[newDelegateIndex++] = fetch(y * width + x);
+            }
+        }
+
+        this.targets = newDelegate;
+
+        return this;
     }
 
     public <X, Y> Catheter<Y> matrixVary(final int width, X input, final TriFunction<MatrixPos, T, X, Y> action) {
@@ -833,38 +856,39 @@ public class Catheter<T> {
     }
 
     public static void main(String[] args) {
-        Catheter<Integer> source = Catheter.make(
-                3, 3, 3,
-                4, 1, 1,
-                5, 9, 9
+        DoubleCatheter source = DoubleCatheter.make(
+                1, 1, 1, 1,
+                1, 1, 1, 1,
+                1, 1, 1, 1,
+                1, 1, 1, 1
         );
-        Catheter<Integer> input = Catheter.make(
-                1, 0, 0,
-                0, 1, 0,
-                0, 0, 1
+        DoubleCatheter input = DoubleCatheter.make(
+                1, 1, 1, 1,
+                1, 1, 1, 1,
+                1, 1, 1, 1,
+                1, 1, 1, 1
         );
 
         source.dump()
-                .matrixHomoVary(3, input, (pos, sourceX, inputX) -> {
-                    return sourceX - inputX;
+                .matrixHomoVary(4, input, (pos, sourceX, inputX) -> {
+                    return sourceX * inputX;
                 })
-                .matrixEach(3, (pos, item) -> {
+                .matrixEach(4, (pos, item) -> {
                     System.out.println(pos);
                     System.out.println(item);
                 });
 
         System.out.println("------");
 
-        source.matrixMap(3, 3, input, (flockPos, sourcePos, inputPos, sourceX, inputX) -> {
+        source.matrixMap(4, 4, input, (flockPos, sourcePos, inputPos, sourceX, inputX) -> {
                     return sourceX * inputX;
                 }, (destPos, combine1, combine2) -> {
                     return combine1 + combine2;
                 })
-                .matrixEach(3, (pos, item) -> {
+                .matrixEach(4, (pos, item) -> {
                     System.out.println(pos);
                     System.out.println(item);
                 });
-
 
     }
 
