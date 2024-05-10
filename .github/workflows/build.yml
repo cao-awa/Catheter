@@ -33,6 +33,9 @@ jobs:
         run: chmod +x ./gradlew
       - name: build
         run: ./gradlew build
+        env:
+          GH_ACTOR: ${{ github.actor }}
+          GH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
       - name: make source
         run: ./gradlew build
       - name: capture build artifacts
