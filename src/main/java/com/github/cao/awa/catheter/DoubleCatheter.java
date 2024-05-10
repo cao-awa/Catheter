@@ -1,6 +1,7 @@
 package com.github.cao.awa.catheter;
 
 import com.github.cao.awa.catheter.function.QuinFunction;
+import com.github.cao.awa.catheter.function.TriConsumer;
 import com.github.cao.awa.catheter.function.TriFunction;
 import com.github.cao.awa.catheter.matrix.MatrixFlockPos;
 import com.github.cao.awa.catheter.matrix.MatrixPos;
@@ -67,6 +68,48 @@ public class DoubleCatheter {
             action.accept(ts[index++]);
         }
         poster.run();
+        return this;
+    }
+
+    public <X> DoubleCatheter each(X initializer, final BiConsumer<X, Double> action) {
+        final double[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, ts[index++]);
+        }
+        return this;
+    }
+
+    public <X> DoubleCatheter each(X initializer, final BiConsumer<X, Double> action, Consumer<X> poster) {
+        final double[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, ts[index++]);
+        }
+        poster.accept(initializer);
+        return this;
+    }
+
+    public <X> DoubleCatheter overall(X initializer, final TriConsumer<X, Integer, Double> action) {
+        final double[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, index, ts[index++]);
+        }
+        return this;
+    }
+
+    public <X> DoubleCatheter overall(X initializer, final TriConsumer<X, Integer, Double> action, Consumer<X> poster) {
+        final double[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, index, ts[index++]);
+        }
+        poster.accept(initializer);
         return this;
     }
 
@@ -302,6 +345,16 @@ public class DoubleCatheter {
         }
         this.targets = newDelegate;
 
+        return this;
+    }
+
+    public DoubleCatheter whenFlock(final Double source, final BiFunction<Double, Double, Double> maker, Consumer<Double> consumer) {
+        consumer.accept(flock(source, maker));
+        return this;
+    }
+
+    public DoubleCatheter whenFlock(BiFunction<Double, Double, Double> maker, Consumer<Double> consumer) {
+        consumer.accept(flock(maker));
         return this;
     }
 
@@ -609,11 +662,11 @@ public class DoubleCatheter {
         return this;
     }
 
-    private double fetch(int index) {
+    public double fetch(int index) {
         return this.targets[Math.min(index, this.targets.length - 1)];
     }
 
-    private void fetch(int index, double item) {
+    public void fetch(int index, double item) {
         this.targets[index] = item;
     }
 
@@ -692,7 +745,6 @@ public class DoubleCatheter {
                 // 获取自身的值
                 final double fetchedSource = fetch(posY * width + sourceX);
 
-                System.out.println("POSX: " + posX + "/INPUTY: " + inputY);
                 // 获取输入的值
                 final double fetchedInput = input.fetch(inputY * inputWidth + posX);
 
@@ -767,6 +819,31 @@ public class DoubleCatheter {
             }
             return action.apply(new MatrixPos(wValue, hValue), item);
         });
+    }
+
+    public Catheter<DoubleCatheter> matrixLines(final int width) {
+        if (!(count() > 0 && count() % width == 0)) {
+            throw new IllegalArgumentException("The elements does not is a matrix");
+        }
+
+        final int sourceHeight = count() / width;
+        Catheter<DoubleCatheter> results = Catheter.makeCapacity(sourceHeight);
+        DoubleCatheter catheter = DoubleCatheter.makeCapacity(width);
+        for (int y = 0; y < sourceHeight; y++) {
+            for (int x = 0; x < width; x++) {
+                final double element = fetch(y * width + x);
+                catheter.fetch(
+                        x,
+                        element
+                );
+            }
+            results.fetch(
+                    y,
+                    catheter.dump()
+            );
+        }
+
+        return results;
     }
 
     public DoubleCatheter shuffle() {

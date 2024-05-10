@@ -1,6 +1,7 @@
 package com.github.cao.awa.catheter;
 
 import com.github.cao.awa.catheter.function.QuinFunction;
+import com.github.cao.awa.catheter.function.TriConsumer;
 import com.github.cao.awa.catheter.function.TriFunction;
 import com.github.cao.awa.catheter.matrix.MatrixFlockPos;
 import com.github.cao.awa.catheter.matrix.MatrixPos;
@@ -67,6 +68,48 @@ public class BooleanCatheter {
             action.accept(ts[index++]);
         }
         poster.run();
+        return this;
+    }
+
+    public <X> BooleanCatheter each(X initializer, final BiConsumer<X, Boolean> action) {
+        final boolean[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, ts[index++]);
+        }
+        return this;
+    }
+
+    public <X> BooleanCatheter each(X initializer, final BiConsumer<X, Boolean> action, Consumer<X> poster) {
+        final boolean[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, ts[index++]);
+        }
+        poster.accept(initializer);
+        return this;
+    }
+
+    public <X> BooleanCatheter overall(X initializer, final TriConsumer<X, Integer, Boolean> action) {
+        final boolean[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, index, ts[index++]);
+        }
+        return this;
+    }
+
+    public <X> BooleanCatheter overall(X initializer, final TriConsumer<X, Integer, Boolean> action, Consumer<X> poster) {
+        final boolean[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, index, ts[index++]);
+        }
+        poster.accept(initializer);
         return this;
     }
 
@@ -297,6 +340,16 @@ public class BooleanCatheter {
         }
         this.targets = newDelegate;
 
+        return this;
+    }
+
+    public BooleanCatheter whenFlock(final Boolean source, final BiFunction<Boolean, Boolean, Boolean> maker, Consumer<Boolean> consumer) {
+        consumer.accept(flock(source, maker));
+        return this;
+    }
+
+    public BooleanCatheter whenFlock(BiFunction<Boolean, Boolean, Boolean> maker, Consumer<Boolean> consumer) {
+        consumer.accept(flock(maker));
         return this;
     }
 
@@ -604,11 +657,11 @@ public class BooleanCatheter {
         return this;
     }
 
-    private boolean fetch(int index) {
+    public boolean fetch(int index) {
         return this.targets[Math.min(index, this.targets.length - 1)];
     }
 
-    private void fetch(int index, boolean item) {
+    public void fetch(int index, boolean item) {
         this.targets[index] = item;
     }
 
@@ -761,6 +814,31 @@ public class BooleanCatheter {
             }
             return action.apply(new MatrixPos(wValue, hValue), item);
         });
+    }
+
+    public Catheter<BooleanCatheter> matrixLines(final int width) {
+        if (!(count() > 0 && count() % width == 0)) {
+            throw new IllegalArgumentException("The elements does not is a matrix");
+        }
+
+        final int sourceHeight = count() / width;
+        Catheter<BooleanCatheter> results = Catheter.makeCapacity(sourceHeight);
+        BooleanCatheter catheter = BooleanCatheter.makeCapacity(width);
+        for (int y = 0; y < sourceHeight; y++) {
+            for (int x = 0; x < width; x++) {
+                final boolean element = fetch(y * width + x);
+                catheter.fetch(
+                        x,
+                        element
+                );
+            }
+            results.fetch(
+                    y,
+                    catheter.dump()
+            );
+        }
+
+        return results;
     }
 
     public BooleanCatheter shuffle() {

@@ -1,6 +1,7 @@
 package com.github.cao.awa.catheter;
 
 import com.github.cao.awa.catheter.function.QuinFunction;
+import com.github.cao.awa.catheter.function.TriConsumer;
 import com.github.cao.awa.catheter.function.TriFunction;
 import com.github.cao.awa.catheter.matrix.MatrixFlockPos;
 import com.github.cao.awa.catheter.matrix.MatrixPos;
@@ -67,6 +68,48 @@ public class LongCatheter {
             action.accept(ts[index++]);
         }
         poster.run();
+        return this;
+    }
+
+    public <X> LongCatheter each(X initializer, final BiConsumer<X, Long> action) {
+        final long[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, ts[index++]);
+        }
+        return this;
+    }
+
+    public <X> LongCatheter each(X initializer, final BiConsumer<X, Long> action, Consumer<X> poster) {
+        final long[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, ts[index++]);
+        }
+        poster.accept(initializer);
+        return this;
+    }
+
+    public <X> LongCatheter overall(X initializer, final TriConsumer<X, Integer, Long> action) {
+        final long[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, index, ts[index++]);
+        }
+        return this;
+    }
+
+    public <X> LongCatheter overall(X initializer, final TriConsumer<X, Integer, Long> action, Consumer<X> poster) {
+        final long[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, index, ts[index++]);
+        }
+        poster.accept(initializer);
         return this;
     }
 
@@ -302,6 +345,16 @@ public class LongCatheter {
         }
         this.targets = newDelegate;
 
+        return this;
+    }
+
+    public LongCatheter whenFlock(final Long source, final BiFunction<Long, Long, Long> maker, Consumer<Long> consumer) {
+        consumer.accept(flock(source, maker));
+        return this;
+    }
+
+    public LongCatheter whenFlock(BiFunction<Long, Long, Long> maker, Consumer<Long> consumer) {
+        consumer.accept(flock(maker));
         return this;
     }
 
@@ -609,11 +662,11 @@ public class LongCatheter {
         return this;
     }
 
-    private long fetch(int index) {
+    public long fetch(int index) {
         return this.targets[Math.min(index, this.targets.length - 1)];
     }
 
-    private void fetch(int index, long item) {
+    public void fetch(int index, long item) {
         this.targets[index] = item;
     }
 
@@ -768,6 +821,31 @@ public class LongCatheter {
         });
     }
 
+    public Catheter<LongCatheter> matrixLines(final int width) {
+        if (!(count() > 0 && count() % width == 0)) {
+            throw new IllegalArgumentException("The elements does not is a matrix");
+        }
+
+        final int sourceHeight = count() / width;
+        Catheter<LongCatheter> results = Catheter.makeCapacity(sourceHeight);
+        LongCatheter catheter = LongCatheter.makeCapacity(width);
+        for (int y = 0; y < sourceHeight; y++) {
+            for (int x = 0; x < width; x++) {
+                final long element = fetch(y * width + x);
+                catheter.fetch(
+                        x,
+                        element
+                );
+            }
+            results.fetch(
+                    y,
+                    catheter.dump()
+            );
+        }
+
+        return results;
+    }
+
     public LongCatheter shuffle() {
         sort((t1, t2) -> RANDOM.nextInt());
         return this;
@@ -804,37 +882,47 @@ public class LongCatheter {
 
     public static void main(String[] args) {
         LongCatheter source = LongCatheter.make(
-                3, 3, 3,
-                4, 1, 1,
-                5, 9, 9
+                1, 2, 3, 4,
+                5, 6, 7, 8
         );
         LongCatheter input = LongCatheter.make(
-                1, 0, 0,
-                0, 1, 0,
-                0, 0, 1
+                1, 5,
+                2, 6,
+                3, 7,
+                4, 8
         );
 
-        source.dump()
-                .matrixHomoVary(3, input, (pos, sourceX, inputX) -> {
-                    return sourceX - inputX;
-                })
-                .matrixEach(3, (pos, item) -> {
-                    System.out.println(pos);
-                    System.out.println(item);
-                });
+//        source.dump()
+//                .matrixHomoVary(3, input, (pos, sourceX, inputX) -> {
+//                    return sourceX - inputX;
+//                })
+//                .matrixEach(3, (pos, item) -> {
+//                    System.out.println(pos);
+//                    System.out.println(item);
+//                });
 
         System.out.println("------");
 
-        source.matrixMap(3, 3, input, (flockPos, sourcePos, inputPos, sourceX, inputX) -> {
+        source.matrixMap(4, 2, input, (flockPos, sourcePos, inputPos, sourceX, inputX) -> {
                     return sourceX * inputX;
                 }, (destPos, combine1, combine2) -> {
                     return combine1 + combine2;
                 })
-                .matrixEach(3, (pos, item) -> {
+                .matrixEach(2, (pos, item) -> {
                     System.out.println(pos);
                     System.out.println(item);
                 });
 
+//        LongCatheter.make(
+//                1, 2, 3, 4,
+//                5, 6, 7, 8
+//        ).matrixEach(4, (pos, item) -> {
+//            System.out.println(pos.x());
+//            System.out.println(pos.y());
+//            System.out.println(item);
+//        }).matrixHomoVary(4, input, (pos, sourceX, inputX) -> {
+//            return sourceX + inputX;
+//        });
     }
 
     private static long[] array(int size) {

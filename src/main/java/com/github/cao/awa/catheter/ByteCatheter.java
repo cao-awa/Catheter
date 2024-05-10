@@ -1,6 +1,7 @@
 package com.github.cao.awa.catheter;
 
 import com.github.cao.awa.catheter.function.QuinFunction;
+import com.github.cao.awa.catheter.function.TriConsumer;
 import com.github.cao.awa.catheter.function.TriFunction;
 import com.github.cao.awa.catheter.matrix.MatrixFlockPos;
 import com.github.cao.awa.catheter.matrix.MatrixPos;
@@ -67,6 +68,48 @@ public class ByteCatheter {
             action.accept(ts[index++]);
         }
         poster.run();
+        return this;
+    }
+
+    public <X> ByteCatheter each(X initializer, final BiConsumer<X, Byte> action) {
+        final byte[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, ts[index++]);
+        }
+        return this;
+    }
+
+    public <X> ByteCatheter each(X initializer, final BiConsumer<X, Byte> action, Consumer<X> poster) {
+        final byte[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, ts[index++]);
+        }
+        poster.accept(initializer);
+        return this;
+    }
+
+    public <X> ByteCatheter overall(X initializer, final TriConsumer<X, Integer, Byte> action) {
+        final byte[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, index, ts[index++]);
+        }
+        return this;
+    }
+
+    public <X> ByteCatheter overall(X initializer, final TriConsumer<X, Integer, Byte> action, Consumer<X> poster) {
+        final byte[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, index, ts[index++]);
+        }
+        poster.accept(initializer);
         return this;
     }
 
@@ -302,6 +345,16 @@ public class ByteCatheter {
         }
         this.targets = newDelegate;
 
+        return this;
+    }
+
+    public ByteCatheter whenFlock(final Byte source, final BiFunction<Byte, Byte, Byte> maker, Consumer<Byte> consumer) {
+        consumer.accept(flock(source, maker));
+        return this;
+    }
+
+    public ByteCatheter whenFlock(BiFunction<Byte, Byte, Byte> maker, Consumer<Byte> consumer) {
+        consumer.accept(flock(maker));
         return this;
     }
 
@@ -609,11 +662,11 @@ public class ByteCatheter {
         return this;
     }
 
-    private byte fetch(int index) {
+    public byte fetch(int index) {
         return this.targets[Math.min(index, this.targets.length - 1)];
     }
 
-    private void fetch(int index, byte item) {
+    public void fetch(int index, byte item) {
         this.targets[index] = item;
     }
 
@@ -766,6 +819,31 @@ public class ByteCatheter {
             }
             return action.apply(new MatrixPos(wValue, hValue), item);
         });
+    }
+
+    public Catheter<ByteCatheter> matrixLines(final int width) {
+        if (!(count() > 0 && count() % width == 0)) {
+            throw new IllegalArgumentException("The elements does not is a matrix");
+        }
+
+        final int sourceHeight = count() / width;
+        Catheter<ByteCatheter> results = Catheter.makeCapacity(sourceHeight);
+        ByteCatheter catheter = ByteCatheter.makeCapacity(width);
+        for (int y = 0; y < sourceHeight; y++) {
+            for (int x = 0; x < width; x++) {
+                final byte element = fetch(y * width + x);
+                catheter.fetch(
+                        x,
+                        element
+                );
+            }
+            results.fetch(
+                    y,
+                    catheter.dump()
+            );
+        }
+
+        return results;
     }
 
     public ByteCatheter shuffle() {

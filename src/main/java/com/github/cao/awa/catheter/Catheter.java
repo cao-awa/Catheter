@@ -1,6 +1,7 @@
 package com.github.cao.awa.catheter;
 
 import com.github.cao.awa.catheter.function.QuinFunction;
+import com.github.cao.awa.catheter.function.TriConsumer;
 import com.github.cao.awa.catheter.function.TriFunction;
 import com.github.cao.awa.catheter.matrix.MatrixFlockPos;
 import com.github.cao.awa.catheter.matrix.MatrixPos;
@@ -61,6 +62,48 @@ public class Catheter<T> {
             action.accept(ts[index++]);
         }
         poster.run();
+        return this;
+    }
+
+    public <X> Catheter<T> each(X initializer, final BiConsumer<X, T> action) {
+        final T[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, ts[index++]);
+        }
+        return this;
+    }
+
+    public <X> Catheter<T> each(X initializer, final BiConsumer<X, T> action, Consumer<X> poster) {
+        final T[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, ts[index++]);
+        }
+        poster.accept(initializer);
+        return this;
+    }
+
+    public <X> Catheter<T> overall(X initializer, final TriConsumer<X, Integer, T> action) {
+        final T[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, index, ts[index++]);
+        }
+        return this;
+    }
+
+    public <X> Catheter<T> overall(X initializer, final TriConsumer<X, Integer, T> action, Consumer<X> poster) {
+        final T[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            action.accept(initializer, index, ts[index++]);
+        }
+        poster.accept(initializer);
         return this;
     }
 
@@ -327,6 +370,16 @@ public class Catheter<T> {
         }
         this.targets = newDelegate;
 
+        return this;
+    }
+
+    public Catheter<T> whenFlock(final T source, final BiFunction<T, T, T> maker, Consumer<T> consumer) {
+        consumer.accept(flock(source, maker));
+        return this;
+    }
+
+    public Catheter<T> whenFlock(BiFunction<T, T, T> maker, Consumer<T> consumer) {
+        consumer.accept(flock(maker));
         return this;
     }
 
@@ -649,11 +702,11 @@ public class Catheter<T> {
         return this;
     }
 
-    private T fetch(int index) {
+    public T fetch(int index) {
         return this.targets[Math.min(index, this.targets.length - 1)];
     }
 
-    private void fetch(int index, T item) {
+    public void fetch(int index, T item) {
         this.targets[index] = item;
     }
 
@@ -829,6 +882,31 @@ public class Catheter<T> {
         });
     }
 
+    public Catheter<Catheter<T>> matrixLines(final int width) {
+        if (!(count() > 0 && count() % width == 0)) {
+            throw new IllegalArgumentException("The elements does not is a matrix");
+        }
+
+        final int sourceHeight = count() / width;
+        Catheter<Catheter<T>> results = Catheter.makeCapacity(sourceHeight);
+        Catheter<T> catheter = Catheter.makeCapacity(width);
+        for (int y = 0; y < sourceHeight; y++) {
+            for (int x = 0; x < width; x++) {
+                final T element = fetch(y * width + x);
+                catheter.fetch(
+                        x,
+                        element
+                );
+            }
+            results.fetch(
+                    y,
+                    catheter.dump()
+            );
+        }
+
+        return results;
+    }
+
     public Catheter<T> shuffle() {
         sort((t1, t2) -> RANDOM.nextInt());
         return this;
@@ -856,40 +934,53 @@ public class Catheter<T> {
     }
 
     public static void main(String[] args) {
-        DoubleCatheter source = DoubleCatheter.make(
-                1, 1, 1, 1,
-                1, 1, 1, 1,
-                1, 1, 1, 1,
-                1, 1, 1, 1
+        LongCatheter source = LongCatheter.make(
+                1, 2, 3, 4,
+                5, 6, 7, 8
         );
-        DoubleCatheter input = DoubleCatheter.make(
-                1, 1, 1, 1,
-                1, 1, 1, 1,
-                1, 1, 1, 1,
-                1, 1, 1, 1
+        LongCatheter input = LongCatheter.make(
+                1, 5,
+                2, 6,
+                3, 7,
+                4, 8
         );
-
-        source.dump()
-                .matrixHomoVary(4, input, (pos, sourceX, inputX) -> {
-                    return sourceX * inputX;
-                })
-                .matrixEach(4, (pos, item) -> {
-                    System.out.println(pos);
-                    System.out.println(item);
-                });
 
         System.out.println("------");
 
+        System.out.println("---Source---");
+        source.matrixLines(4)
+                .each(line -> {
+                    line.each(new StringBuilder(), (builder, longValue) -> {
+                        builder.append(longValue).append(", ");
+                    }, builder -> {
+                        System.out.println(builder.toString());
+                    });
+                });
+
+        System.out.println("---Input---");
+        input.matrixLines(2)
+                .each(line -> {
+                    line.each(new StringBuilder(), (builder, longValue) -> {
+                        builder.append(longValue).append(", ");
+                    }, builder -> {
+                        System.out.println(builder.toString());
+                    });
+                });
+
+        System.out.println("---Result---");
         source.matrixMap(4, 4, input, (flockPos, sourcePos, inputPos, sourceX, inputX) -> {
                     return sourceX * inputX;
                 }, (destPos, combine1, combine2) -> {
                     return combine1 + combine2;
                 })
-                .matrixEach(4, (pos, item) -> {
-                    System.out.println(pos);
-                    System.out.println(item);
+                .matrixLines(4)
+                .each(line -> {
+                    line.each(new StringBuilder(), (builder, longValue) -> {
+                        builder.append(longValue).append(", ");
+                    }, builder -> {
+                        System.out.println(builder.toString());
+                    });
                 });
-
     }
 
     @SuppressWarnings("unchecked")
