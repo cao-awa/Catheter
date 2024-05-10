@@ -1,0 +1,22 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+group = 'com.github.cao.awa'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+
+    implementation 'org.jetbrains:annotations:24.1.0'
+}
+
+test {
+    useJUnitPlatform()
+}
