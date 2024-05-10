@@ -27,6 +27,14 @@ publishing {
 
 repositories {
     mavenCentral()
+    maven {
+        name = "GitHubPackages"
+        url = "https://maven.pkg.github.com/cao-awa/Sinuatum"
+        credentials {
+            username = "cao-awa"
+            password = "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"
+        }
+    }
 }
 
 dependencies {
@@ -34,6 +42,8 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
 
     implementation 'org.jetbrains:annotations:24.1.0'
+
+    implementation 'com.github.cao.awa:sinuatum:1.0.0-SNAPSHOT'
 }
 
 test {
