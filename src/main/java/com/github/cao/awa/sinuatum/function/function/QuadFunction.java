@@ -1,14 +1,17 @@
-package com.github.cao.awa.catheter.function;
+package com.github.cao.awa.sinuatum.function.function;
 
 import java.util.Objects;
 import java.util.function.Function;
 
+@FunctionalInterface
 public interface QuadFunction<A, B, C, D, R> {
     /**
      * Applies this function to the given arguments.
      *
      * @param a the first function argument
      * @param b the second function argument
+     * @param c the third function argument
+     * @param d the quad function argument
      * @return the function result
      */
     R apply(A a, B b, C c, D d);

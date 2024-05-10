@@ -1,9 +1,17 @@
-package com.github.cao.awa.catheter.function;
+package com.github.cao.awa.sinuatum.function.ecception.consumer;
 
 import java.io.Serializable;
 import java.util.Objects;
 
-public interface TriConsumer<X, Y, Z> extends Serializable {
+@FunctionalInterface
+public interface ExceptingConsumer<A, EX extends Throwable> extends Serializable {
+    /**
+     * Performs this operation on the given arguments.
+     *
+     * @param a the input argument
+     */
+    void accept(A a) throws EX;
+
     /**
      * Returns a composed {@code Consumer} that performs, in sequence, this
      * operation followed by the {@code after} operation. If performing either
@@ -17,13 +25,11 @@ public interface TriConsumer<X, Y, Z> extends Serializable {
      * operation followed by the {@code after} operation
      *
      */
-    default TriConsumer<X, Y, Z> andThen(TriConsumer<X, Y, Z> after) {
+    default ExceptingConsumer<A, EX> andThen(ExceptingConsumer<A, EX> after) {
         Objects.requireNonNull(after);
-        return (x, y, z) -> {
-            accept(x, y, z);
-            after.accept(x, y, z);
+        return (a) -> {
+            accept(a);
+            after.accept(a);
         };
     }
-
-    void accept(X x, Y y, Z z);
 }

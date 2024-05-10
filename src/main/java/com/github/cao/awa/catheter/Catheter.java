@@ -1,12 +1,12 @@
 package com.github.cao.awa.catheter;
 
-import com.github.cao.awa.catheter.function.QuinFunction;
-import com.github.cao.awa.catheter.function.TriConsumer;
-import com.github.cao.awa.catheter.function.TriFunction;
 import com.github.cao.awa.catheter.matrix.MatrixFlockPos;
 import com.github.cao.awa.catheter.matrix.MatrixPos;
 import com.github.cao.awa.catheter.pair.Pair;
 import com.github.cao.awa.catheter.receptacle.Receptacle;
+import com.github.cao.awa.sinuatum.function.consumer.TriConsumer;
+import com.github.cao.awa.sinuatum.function.function.QuinFunction;
+import com.github.cao.awa.sinuatum.function.function.TriFunction;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;

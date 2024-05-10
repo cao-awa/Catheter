@@ -1,17 +1,20 @@
-package com.github.cao.awa.catheter.function;
+package com.github.cao.awa.sinuatum.function.ecception.function;
 
 import java.util.Objects;
-import java.util.function.Function;
 
-public interface TriFunction<A, B, C, R> {
+@FunctionalInterface
+public interface ExceptingQuinFunction<A, B, C, D, E, R, EX extends Throwable> {
     /**
      * Applies this function to the given arguments.
      *
      * @param a the first function argument
      * @param b the second function argument
+     * @param c the third function argument
+     * @param d the quad function argument
+     * @param e the quin function argument
      * @return the function result
      */
-    R apply(A a, B b, C c);
+    R apply(A a, B b, C c, D d, E e) throws EX;
 
     /**
      * Returns a composed function that first applies this function to
@@ -26,8 +29,8 @@ public interface TriFunction<A, B, C, R> {
      * applies the {@code after} function
      * @throws NullPointerException if after is null
      */
-    default <V> TriFunction<A, B, C, V> andThen(Function<? super R, ? extends V> after) {
+    default <V> ExceptingQuinFunction<A, B, C, D, E, V, EX> andThen(ExceptingFunction<? super R, ? extends V, EX> after) {
         Objects.requireNonNull(after);
-        return (a, b, c) -> after.apply(apply(a, b, c));
+        return (a, b, c, d, e) -> after.apply(apply(a, b, c, d, e));
     }
 }

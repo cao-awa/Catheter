@@ -3,8 +3,27 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'com.github.cao.awa'
-version = '1.0-SNAPSHOT'
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/cao-awa/Catheter")
+            credentials {
+                username = System.getenv("GH_ACTOR")
+                password = System.getenv("GH_TOKEN")
+            }
+        }
+    }
+    publications {
+        gpr(MavenPublication) {
+            groupId = project.group_id
+            artifactId = project.artifact_id
+            version = project.version_name
+
+            from components.java
+        }
+    }
+}
 
 repositories {
     mavenCentral()
