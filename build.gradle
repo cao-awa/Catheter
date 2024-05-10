@@ -32,7 +32,7 @@ repositories {
         url = "https://maven.pkg.github.com/cao-awa/Sinuatum"
         credentials {
             username = "cao-awa"
-            password = "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"
+            password = "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"
         }
     }
 }
