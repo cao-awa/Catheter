@@ -31,8 +31,8 @@ repositories {
         name = "GitHubPackages"
         url = "https://maven.pkg.github.com/cao-awa/Sinuatum"
         credentials {
-            username = System.getenv("GH_ACTOR")
-            password = System.getenv("GH_TOKEN")
+            username = "cao-awa"
+            password = "ghp_8yGFQIhfc0wz43ws" + "Orpdne0yOkzhN20XimQl"
         }
     }
 }
