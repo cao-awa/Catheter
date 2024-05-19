@@ -32,16 +32,7 @@ public class ByteCatheter {
         return new ByteCatheter(targets);
     }
 
-    public static ByteCatheter of(Set<Byte> targets) {
-        byte[] delegate = new byte[targets.size()];
-        int index = 0;
-        for (byte target : targets) {
-            delegate[index++] = target;
-        }
-        return new ByteCatheter(delegate);
-    }
-
-    public static ByteCatheter of(List<Byte> targets) {
+    public static ByteCatheter of(Collection<Byte> targets) {
         byte[] delegate = new byte[targets.size()];
         int index = 0;
         for (byte target : targets) {
@@ -356,6 +347,17 @@ public class ByteCatheter {
     public ByteCatheter whenFlock(BiFunction<Byte, Byte, Byte> maker, Consumer<Byte> consumer) {
         consumer.accept(flock(maker));
         return this;
+    }
+
+    public <X> X alternate(final X source, final BiFunction<X, Byte, X> maker) {
+        X result = source;
+        final byte[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            result = maker.apply(result, ts[index++]);
+        }
+        return result;
     }
 
     public byte flock(final byte source, final BiFunction<Byte, Byte, Byte> maker) {

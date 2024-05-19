@@ -35,12 +35,7 @@ public class Catheter<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public static <X> Catheter<X> of(Set<X> targets) {
-        return new Catheter<>((X[]) targets.toArray(Object[]::new));
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <X> Catheter<X> of(List<X> targets) {
+    public static <X> Catheter<X> of(Collection<X> targets) {
         return new Catheter<>((X[]) targets.toArray(Object[]::new));
     }
 
@@ -381,6 +376,17 @@ public class Catheter<T> {
     public Catheter<T> whenFlock(BiFunction<T, T, T> maker, Consumer<T> consumer) {
         consumer.accept(flock(maker));
         return this;
+    }
+
+    public <X> X alternate(final X source, final BiFunction<X, T, X> maker) {
+        X result = source;
+        final T[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            result = maker.apply(result, ts[index++]);
+        }
+        return result;
     }
 
     public T flock(final T source, final BiFunction<T, T, T> maker) {

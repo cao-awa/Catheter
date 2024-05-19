@@ -32,16 +32,7 @@ public class BooleanCatheter {
         return new BooleanCatheter(targets);
     }
 
-    public static BooleanCatheter of(Set<Boolean> targets) {
-        boolean[] delegate = new boolean[targets.size()];
-        int index = 0;
-        for (boolean target : targets) {
-            delegate[index++] = target;
-        }
-        return new BooleanCatheter(delegate);
-    }
-
-    public static BooleanCatheter of(List<Boolean> targets) {
+    public static BooleanCatheter of(Collection<Boolean> targets) {
         boolean[] delegate = new boolean[targets.size()];
         int index = 0;
         for (boolean target : targets) {
@@ -351,6 +342,17 @@ public class BooleanCatheter {
     public BooleanCatheter whenFlock(BiFunction<Boolean, Boolean, Boolean> maker, Consumer<Boolean> consumer) {
         consumer.accept(flock(maker));
         return this;
+    }
+
+    public <X> X alternate(final X source, final BiFunction<X, Boolean, X> maker) {
+        X result = source;
+        final boolean[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            result = maker.apply(result, ts[index++]);
+        }
+        return result;
     }
 
     public boolean flock(final boolean source, final BiFunction<Boolean, Boolean, Boolean> maker) {

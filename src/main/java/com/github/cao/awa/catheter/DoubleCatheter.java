@@ -32,16 +32,7 @@ public class DoubleCatheter {
         return new DoubleCatheter(targets);
     }
 
-    public static DoubleCatheter of(Set<Double> targets) {
-        double[] delegate = new double[targets.size()];
-        int index = 0;
-        for (double target : targets) {
-            delegate[index++] = target;
-        }
-        return new DoubleCatheter(delegate);
-    }
-
-    public static DoubleCatheter of(List<Double> targets) {
+    public static DoubleCatheter of(Collection<Double> targets) {
         double[] delegate = new double[targets.size()];
         int index = 0;
         for (double target : targets) {
@@ -356,6 +347,17 @@ public class DoubleCatheter {
     public DoubleCatheter whenFlock(BiFunction<Double, Double, Double> maker, Consumer<Double> consumer) {
         consumer.accept(flock(maker));
         return this;
+    }
+
+    public <X> X alternate(final X source, final BiFunction<X, Double, X> maker) {
+        X result = source;
+        final double[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            result = maker.apply(result, ts[index++]);
+        }
+        return result;
     }
 
     public double flock(final double source, final BiFunction<Double, Double, Double> maker) {

@@ -32,16 +32,7 @@ public class LongCatheter {
         return new LongCatheter(targets);
     }
 
-    public static LongCatheter of(Set<Long> targets) {
-        long[] delegate = new long[targets.size()];
-        int index = 0;
-        for (long target : targets) {
-            delegate[index++] = target;
-        }
-        return new LongCatheter(delegate);
-    }
-
-    public static LongCatheter of(List<Long> targets) {
+    public static LongCatheter of(Collection<Long> targets) {
         long[] delegate = new long[targets.size()];
         int index = 0;
         for (long target : targets) {
@@ -356,6 +347,17 @@ public class LongCatheter {
     public LongCatheter whenFlock(BiFunction<Long, Long, Long> maker, Consumer<Long> consumer) {
         consumer.accept(flock(maker));
         return this;
+    }
+
+    public <X> X alternate(final X source, final BiFunction<X, Long, X> maker) {
+        X result = source;
+        final long[] ts = this.targets;
+        int index = 0;
+        final int length = ts.length;
+        while (index < length) {
+            result = maker.apply(result, ts[index++]);
+        }
+        return result;
     }
 
     public long flock(final long source, final BiFunction<Long, Long, Long> maker) {
