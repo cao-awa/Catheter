@@ -33,6 +33,9 @@ public class LongCatheter {
     }
 
     public static LongCatheter of(Collection<Long> targets) {
+        if (targets == null) {
+            return new LongCatheter(array(0));
+        }
         long[] delegate = new long[targets.size()];
         int index = 0;
         for (long target : targets) {

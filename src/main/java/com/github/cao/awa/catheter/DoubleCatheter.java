@@ -33,6 +33,9 @@ public class DoubleCatheter {
     }
 
     public static DoubleCatheter of(Collection<Double> targets) {
+        if (targets == null) {
+            return new DoubleCatheter(array(0));
+        }
         double[] delegate = new double[targets.size()];
         int index = 0;
         for (double target : targets) {

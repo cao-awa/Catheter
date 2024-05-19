@@ -33,6 +33,9 @@ public class BooleanCatheter {
     }
 
     public static BooleanCatheter of(Collection<Boolean> targets) {
+        if (targets == null) {
+            return new BooleanCatheter(array(0));
+        }
         boolean[] delegate = new boolean[targets.size()];
         int index = 0;
         for (boolean target : targets) {

@@ -36,6 +36,9 @@ public class Catheter<T> {
 
     @SuppressWarnings("unchecked")
     public static <X> Catheter<X> of(Collection<X> targets) {
+        if (targets == null) {
+            return new Catheter<>(array(0));
+        }
         return new Catheter<>((X[]) targets.toArray(Object[]::new));
     }
 

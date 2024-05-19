@@ -33,6 +33,9 @@ public class ByteCatheter {
     }
 
     public static ByteCatheter of(Collection<Byte> targets) {
+        if (targets == null) {
+            return new ByteCatheter(array(0));
+        }
         byte[] delegate = new byte[targets.size()];
         int index = 0;
         for (byte target : targets) {
