@@ -333,7 +333,7 @@ Catheter<X> catheter = catheter.dump();
 ```
 
 ## Count
-Theres action can count the catheter eleme.
+Theres action can count the catheter elements.
 
 ### Directly count
 
