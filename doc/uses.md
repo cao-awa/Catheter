@@ -235,7 +235,7 @@ catheter.replace(element -> {
 });
 ```
 
-In this example, if catheter have elements {1, 2, 3}, then got a new catheter as {"1", "2", "3"} after replace.
+In this example, if catheter have elements {1, 2, 3}, then got a new catheter as {"1", "2", "3"} after vary.
 
 ## shuffle
 
