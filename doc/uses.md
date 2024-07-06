@@ -1,5 +1,5 @@
 # Example
-```Catheter``` is a stated streaming data solution.
+```Catheter``` is a stateful streaming data solution.
 
 ```java
 Catheter<Integer> catheter = Catheter.make(
