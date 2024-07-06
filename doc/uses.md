@@ -206,9 +206,9 @@ In this example, if catheter have elements {1, 2, 3}, then ```concat``` will be 
 
 Because initializer is "0", it concat to the first element "1" then changed to "01",
 
-When it sum to second element, it changed to "01"+"2" that is "012",
+When it concat to second element, it changed to "01"+"2" that is "012",
 
-Finally, it sum to third element, then it changed to "012"+"3" that is "0123".
+Finally, it concat to third element, then it changed to "012"+"3" that is "0123".
 
 The action ```alternate``` must assign an initializer because it need inference the result type by method signature.
 
