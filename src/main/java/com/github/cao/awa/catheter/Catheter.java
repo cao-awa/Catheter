@@ -9,6 +9,7 @@ import com.github.cao.awa.sinuatum.function.function.QuinFunction;
 import com.github.cao.awa.sinuatum.function.function.TriFunction;
 import org.jetbrains.annotations.Nullable;
 
+import java.sql.Array;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
@@ -935,61 +936,15 @@ public class Catheter<T> {
     }
 
     public List<T> list() {
-        return List.of(this.targets);
+        return Arrays.asList(array());
     }
 
     public Set<T> set() {
-        return Set.of(this.targets);
+        return new HashSet<>(list());
     }
 
     public static void main(String[] args) {
-        LongCatheter source = LongCatheter.make(
-                1, 2, 3, 4,
-                5, 6, 7, 8
-        );
-        LongCatheter input = LongCatheter.make(
-                1, 5,
-                2, 6,
-                3, 7,
-                4, 8
-        );
 
-        System.out.println("------");
-
-        System.out.println("---Source---");
-        source.matrixLines(4)
-                .each(line -> {
-                    line.each(new StringBuilder(), (builder, longValue) -> {
-                        builder.append(longValue).append(", ");
-                    }, builder -> {
-                        System.out.println(builder.toString());
-                    });
-                });
-
-        System.out.println("---Input---");
-        input.matrixLines(2)
-                .each(line -> {
-                    line.each(new StringBuilder(), (builder, longValue) -> {
-                        builder.append(longValue).append(", ");
-                    }, builder -> {
-                        System.out.println(builder.toString());
-                    });
-                });
-
-        System.out.println("---Result---");
-        source.matrixMap(4, 4, input, (flockPos, sourcePos, inputPos, sourceX, inputX) -> {
-                    return sourceX * inputX;
-                }, (destPos, combine1, combine2) -> {
-                    return combine1 + combine2;
-                })
-                .matrixLines(4)
-                .each(line -> {
-                    line.each(new StringBuilder(), (builder, longValue) -> {
-                        builder.append(longValue).append(", ");
-                    }, builder -> {
-                        System.out.println(builder.toString());
-                    });
-                });
     }
 
     @SuppressWarnings("unchecked")
