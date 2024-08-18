@@ -781,7 +781,7 @@ public class Catheter<T> {
         boolean found = false;
 
         while (i != edge) {
-            if (fetch(i) == target) {
+            if (target.equals(fetch(i))) {
                 found = true;
                 break;
             }
