@@ -757,6 +757,64 @@ public class Catheter<T> {
         return append(objects.array());
     }
 
+    public Catheter<T> remove(T target) {
+        if (isEmpty()) {
+            return this;
+        }
+
+        if (target == null) {
+            return exists();
+        }
+
+        int i = 0;
+        int edge = this.targets.length - 1;
+        boolean found = false;
+
+        while (i != edge) {
+            if (fetch(i) == target) {
+                found = true;
+                break;
+            }
+            i++;
+        }
+
+        if (!found) {
+            return this;
+        }
+
+        return removeWithIndex(i);
+    }
+
+    public Catheter<T> removeWithIndex(int index) {
+        if (isEmpty() || index >= count() || index < 0) {
+            return this;
+        }
+
+        int edge = count() - 1;
+        T[] newDelegate = array(edge);
+        if (index > 0) {
+            System.arraycopy(
+                    this.targets,
+                    0,
+                    newDelegate,
+                    0,
+                    index
+            );
+        }
+
+        System.arraycopy(
+                this.targets,
+                index + 1,
+                newDelegate,
+                index,
+                edge - index
+        );
+
+        this.targets = newDelegate;
+
+        return this;
+    }
+
     public boolean isPresent() {
         return count() > 0;
     }
@@ -767,7 +825,6 @@ public class Catheter<T> {
         }
         return this;
     }
-
 
     public boolean isEmpty() {
         return count() == 0;
@@ -1020,7 +1077,11 @@ public class Catheter<T> {
     }
 
     public static void main(String[] args) {
+        Catheter<String> strings = Catheter.make(
+                "1", "2", "3", "4", "5", "6", "7"
+        );
 
+        System.out.println(strings.remove("5").list());
     }
 
     @SuppressWarnings("unchecked")

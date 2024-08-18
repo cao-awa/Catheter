@@ -286,6 +286,36 @@ public class ByteCatheter {
         );
     }
 
+    public ByteCatheter removeWithIndex(int index) {
+        if (isEmpty() || index >= count() || index < 0) {
+            return this;
+        }
+
+        byte[] newDelegate = array(count() - 1);
+        if (index > 0) {
+            System.arraycopy(
+                    this.targets,
+                    0,
+                    newDelegate,
+                    0,
+                    index
+            );
+        }
+
+        System.arraycopy(
+                this.targets,
+                index + 1,
+                newDelegate,
+                index,
+                count() - 1 - index
+        );
+
+        this.targets = newDelegate;
+
+        return this;
+    }
+
+
     public boolean isPresent() {
         return count() > 0;
     }

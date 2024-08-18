@@ -874,6 +874,35 @@ public class DoubleCatheter {
         return results;
     }
 
+    public DoubleCatheter removeWithIndex(int index) {
+        if (isEmpty() || index >= count() || index < 0) {
+            return this;
+        }
+
+        double[] newDelegate = array(count() - 1);
+        if (index > 0) {
+            System.arraycopy(
+                    this.targets,
+                    0,
+                    newDelegate,
+                    0,
+                    index
+            );
+        }
+
+        System.arraycopy(
+                this.targets,
+                index + 1,
+                newDelegate,
+                index,
+                count() - 1 - index
+        );
+
+        this.targets = newDelegate;
+
+        return this;
+    }
+
     public DoubleCatheter shuffle() {
         sort((t1, t2) -> RANDOM.nextInt());
         return this;

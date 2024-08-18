@@ -317,6 +317,35 @@ public class LongCatheter {
         return this;
     }
 
+    public LongCatheter removeWithIndex(int index) {
+        if (isEmpty() || index >= count() || index < 0) {
+            return this;
+        }
+
+        long[] newDelegate = array(count() - 1);
+        if (index > 0) {
+            System.arraycopy(
+                    this.targets,
+                    0,
+                    newDelegate,
+                    0,
+                    index
+            );
+        }
+
+        System.arraycopy(
+                this.targets,
+                index + 1,
+                newDelegate,
+                index,
+                count() - 1 - index
+        );
+
+        this.targets = newDelegate;
+
+        return this;
+    }
+
     public LongCatheter distinct() {
         final Map<Long, Boolean> map = new HashMap<>();
         return filter(
@@ -937,7 +966,7 @@ public class LongCatheter {
 
         System.out.println("???");
 
-        System.out.println(source.discard(x -> x < 5).list());
+        System.out.println(source.removeWithIndex(4).list());
 
         System.out.println("???");
     }
