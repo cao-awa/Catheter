@@ -757,6 +757,29 @@ public class Catheter<T> {
         return append(objects.array());
     }
 
+    public boolean isPresent() {
+        return count() > 0;
+    }
+
+    public Catheter<T> ifPresent(Consumer<Catheter<T>> action) {
+        if (count() > 0) {
+            action.accept(this);
+        }
+        return this;
+    }
+
+
+    public boolean isEmpty() {
+        return count() == 0;
+    }
+
+    public Catheter<T> ifEmpty(Consumer<Catheter<T>> action) {
+        if (count() == 0) {
+            action.accept(this);
+        }
+        return this;
+    }
+
     public Catheter<T> repeat(final int count) {
         final T[] ts = array();
         for (int i = 0; i < count; i++) {

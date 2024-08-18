@@ -273,6 +273,29 @@ public class BooleanCatheter {
         return filter(initializer, predicate);
     }
 
+    public boolean isPresent() {
+        return count() > 0;
+    }
+
+    public BooleanCatheter ifPresent(Consumer<BooleanCatheter> action) {
+        if (count() > 0) {
+            action.accept(this);
+        }
+        return this;
+    }
+
+    public boolean isEmpty() {
+        return count() == 0;
+    }
+
+    public BooleanCatheter ifEmpty(Consumer<BooleanCatheter> action) {
+        if (count() == 0) {
+            action.accept(this);
+        }
+        return this;
+    }
+
+
     public BooleanCatheter distinct() {
         final Map<Boolean, Boolean> map = new HashMap<>();
         return filter(

@@ -879,6 +879,28 @@ public class DoubleCatheter {
         return this;
     }
 
+    public boolean isPresent() {
+        return count() > 0;
+    }
+
+    public DoubleCatheter ifPresent(Consumer<DoubleCatheter> action) {
+        if (count() > 0) {
+            action.accept(this);
+        }
+        return this;
+    }
+
+    public boolean isEmpty() {
+        return count() == 0;
+    }
+
+    public DoubleCatheter ifEmpty(Consumer<DoubleCatheter> action) {
+        if (count() == 0) {
+            action.accept(this);
+        }
+        return this;
+    }
+
     public DoubleCatheter dump() {
         return new DoubleCatheter(array());
     }

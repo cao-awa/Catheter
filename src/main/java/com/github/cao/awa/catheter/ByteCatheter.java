@@ -286,6 +286,28 @@ public class ByteCatheter {
         );
     }
 
+    public boolean isPresent() {
+        return count() > 0;
+    }
+
+    public ByteCatheter ifPresent(Consumer<ByteCatheter> action) {
+        if (count() > 0) {
+            action.accept(this);
+        }
+        return this;
+    }
+
+    public boolean isEmpty() {
+        return count() == 0;
+    }
+
+    public ByteCatheter ifEmpty(Consumer<ByteCatheter> action) {
+        if (count() == 0) {
+            action.accept(this);
+        }
+        return this;
+    }
+
     public ByteCatheter sort() {
         Arrays.sort(this.targets);
         return this;

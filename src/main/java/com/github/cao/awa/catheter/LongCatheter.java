@@ -295,6 +295,28 @@ public class LongCatheter {
         return overallFilter((index, item) -> predicate.apply(index, item, initializer));
     }
 
+    public boolean isPresent() {
+        return count() > 0;
+    }
+
+    public LongCatheter ifPresent(Consumer<LongCatheter> action) {
+        if (count() > 0) {
+            action.accept(this);
+        }
+        return this;
+    }
+
+    public boolean isEmpty() {
+        return count() == 0;
+    }
+
+    public LongCatheter ifEmpty(Consumer<LongCatheter> action) {
+        if (count() == 0) {
+            action.accept(this);
+        }
+        return this;
+    }
+
     public LongCatheter distinct() {
         final Map<Long, Boolean> map = new HashMap<>();
         return filter(
