@@ -776,6 +776,11 @@ public class Catheter<T> {
             return exists();
         }
 
+        if (count() == 1 && target.equals(fetch(0))) {
+            this.targets = array(0);
+            return this;
+        }
+
         int i = 0;
         int edge = this.targets.length - 1;
         boolean found = false;
@@ -1088,10 +1093,10 @@ public class Catheter<T> {
 
     public static void main(String[] args) {
         Catheter<String> strings = Catheter.make(
-                "1", "2", "3", "4", "5", "6", "7"
+                "1"
         );
 
-        System.out.println(strings.remove("5").list());
+        System.out.println(strings.remove("1").list());
     }
 
     @SuppressWarnings("unchecked")
