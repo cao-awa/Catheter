@@ -412,6 +412,16 @@ public class BooleanCatheter {
         return result;
     }
 
+    public <X> BooleanCatheter whenAlternate(final X source, final BiFunction<X, Boolean, X> maker, Consumer<X> consumer) {
+        consumer.accept(alternate(source, maker));
+        return this;
+    }
+
+    public <X> BooleanCatheter whenAlternate(BiFunction<X, Boolean, X> maker, Consumer<X> consumer) {
+        consumer.accept(alternate(null, maker));
+        return this;
+    }
+
     public boolean flock(final boolean source, final BiFunction<Boolean, Boolean, Boolean> maker) {
         boolean result = source;
         final boolean[] ts = this.targets;

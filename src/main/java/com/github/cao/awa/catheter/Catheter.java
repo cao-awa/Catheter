@@ -446,6 +446,16 @@ public class Catheter<T> {
         return result;
     }
 
+    public <X> Catheter<T> whenAlternate(final X source, final BiFunction<X, T, X> maker, Consumer<X> consumer) {
+        consumer.accept(alternate(source, maker));
+        return this;
+    }
+
+    public <X> Catheter<T> whenAlternate(BiFunction<X, T, X> maker, Consumer<X> consumer) {
+        consumer.accept(alternate(null, maker));
+        return this;
+    }
+
     public T flock(final T source, final BiFunction<T, T, T> maker) {
         T result = source;
         final T[] ts = this.targets;

@@ -416,6 +416,16 @@ public class ByteCatheter {
         return result;
     }
 
+    public <X> ByteCatheter whenAlternate(final X source, final BiFunction<X, Byte, X> maker, Consumer<X> consumer) {
+        consumer.accept(alternate(source, maker));
+        return this;
+    }
+
+    public <X> ByteCatheter whenAlternate(BiFunction<X, Byte, X> maker, Consumer<X> consumer) {
+        consumer.accept(alternate(null, maker));
+        return this;
+    }
+
     public byte flock(final byte source, final BiFunction<Byte, Byte, Byte> maker) {
         byte result = source;
         final byte[] ts = this.targets;

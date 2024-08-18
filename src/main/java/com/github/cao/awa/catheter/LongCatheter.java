@@ -437,6 +437,16 @@ public class LongCatheter {
         return result;
     }
 
+    public <X> LongCatheter whenAlternate(final X source, final BiFunction<X, Long, X> maker, Consumer<X> consumer) {
+        consumer.accept(alternate(source, maker));
+        return this;
+    }
+
+    public <X> LongCatheter whenAlternate(BiFunction<X, Long, X> maker, Consumer<X> consumer) {
+        consumer.accept(alternate(null, maker));
+        return this;
+    }
+
     public long flock(final long source, final BiFunction<Long, Long, Long> maker) {
         long result = source;
         final long[] ts = this.targets;

@@ -386,6 +386,16 @@ public class DoubleCatheter {
         return result;
     }
 
+    public <X> DoubleCatheter whenAlternate(final X source, final BiFunction<X, Double, X> maker, Consumer<X> consumer) {
+        consumer.accept(alternate(source, maker));
+        return this;
+    }
+
+    public <X> DoubleCatheter whenAlternate(BiFunction<X, Double, X> maker, Consumer<X> consumer) {
+        consumer.accept(alternate(null, maker));
+        return this;
+    }
+
     public double flock(final double source, final BiFunction<Double, Double, Double> maker) {
         double result = source;
         final double[] ts = this.targets;
