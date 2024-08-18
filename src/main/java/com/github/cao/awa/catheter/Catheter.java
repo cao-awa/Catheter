@@ -189,8 +189,75 @@ public class Catheter<T> {
         });
     }
 
+    public Catheter<T> discard(final Predicate<T> predicate) {
+        return overallFilter((index, item) -> !predicate.test(item));
+    }
+
+    /**
+     * Discarding items that matched given predicate.
+     *
+     * @param initializer A constant to passed to next parameter
+     * @param predicate   The filter predicate
+     * @param <X>         Initializer constant
+     * @return This {@code Catheter<T>}
+     * @author 草二号机
+     * @since 1.0.0
+     */
+    public <X> Catheter<T> discard(final X initializer, final BiPredicate<T, X> predicate) {
+        return overallFilter((index, item) -> !predicate.test(item, initializer));
+    }
+
+    /**
+     * Discarding items that matched given predicate.
+     *
+     * @param succeed   Direct done discard? When succeed true, cancel filter instantly
+     * @param predicate The filter predicate
+     * @return This {@code Catheter<T>}
+     * @author 草
+     * @since 1.0.0
+     */
+    public Catheter<T> orDiscard(final boolean succeed, final Predicate<T> predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discard(predicate);
+    }
+
+    /**
+     * Discarding items that matched given predicate.
+     *
+     * @param succeed     Direct done discard? When succeed true, cancel filter instantly
+     * @param initializer A constant to passed to next parameter
+     * @param predicate   The filter predicate
+     * @param <X>         Initializer constant
+     * @return This {@code Catheter<T>}
+     * @author 草
+     * @author 草二号机
+     * @since 1.0.0
+     */
+    public <X> Catheter<T> orDiscard(final boolean succeed, final X initializer, final BiPredicate<T, X> predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discard(initializer, predicate);
+    }
+
     public Catheter<T> filter(final Predicate<T> predicate) {
         return overallFilter((index, item) -> predicate.test(item));
+    }
+
+    /**
+     * Holding items that matched given predicate.
+     *
+     * @param initializer A constant to passed to next parameter
+     * @param predicate   The filter predicate
+     * @param <X>         Initializer constant
+     * @return This {@code Catheter<T>}
+     * @author 草二号机
+     * @since 1.0.0
+     */
+    public <X> Catheter<T> filter(final X initializer, final BiPredicate<T, X> predicate) {
+        return overallFilter((index, item) -> predicate.test(item, initializer));
     }
 
     /**
@@ -260,20 +327,6 @@ public class Catheter<T> {
      */
     public <X> Catheter<T> overallFilter(final X initializer, final TriFunction<Integer, T, X, Boolean> predicate) {
         return overallFilter((index, item) -> predicate.apply(index, item, initializer));
-    }
-
-    /**
-     * Holding items that matched given predicate.
-     *
-     * @param initializer A constant to passed to next parameter
-     * @param predicate   The filter predicate
-     * @param <X>         Initializer constant
-     * @return This {@code Catheter<T>}
-     * @author 草二号机
-     * @since 1.0.0
-     */
-    public <X> Catheter<T> filter(final X initializer, final BiPredicate<T, X> predicate) {
-        return overallFilter((index, item) -> predicate.test(item, initializer));
     }
 
     /**

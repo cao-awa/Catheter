@@ -235,6 +235,7 @@ public class ByteCatheter {
         while (index < length) {
             // deleting 值为1则为被筛选掉的，忽略
             if (deleting[index] == 1) {
+                index++;
                 continue;
             }
 

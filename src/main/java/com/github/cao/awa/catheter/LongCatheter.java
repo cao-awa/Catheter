@@ -190,8 +190,48 @@ public class LongCatheter {
         });
     }
 
+    public LongCatheter discard(final Predicate<Long> predicate) {
+        return overallFilter((index, item) -> !predicate.test(item));
+    }
+
+    public LongCatheter discard(final long initializer, final BiPredicate<Long, Long> predicate) {
+        return overallFilter((index, item) -> !predicate.test(item, initializer));
+    }
+
+    public LongCatheter orDiscard(final boolean succeed, final Predicate<Long> predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discard(predicate);
+    }
+
+    public LongCatheter orDiscard(final boolean succeed, final long initializer, final BiPredicate<Long, Long> predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discard(initializer, predicate);
+    }
+
     public LongCatheter filter(final Predicate<Long> predicate) {
         return overallFilter((index, item) -> predicate.test(item));
+    }
+
+    public LongCatheter filter(final long initializer, final BiPredicate<Long, Long> predicate) {
+        return overallFilter((index, item) -> predicate.test(item, initializer));
+    }
+
+    public LongCatheter orFilter(final boolean succeed, final Predicate<Long> predicate) {
+        if (succeed) {
+            return this;
+        }
+        return filter(predicate);
+    }
+
+    public LongCatheter orFilter(final boolean succeed, final long initializer, final BiPredicate<Long, Long> predicate) {
+        if (succeed) {
+            return this;
+        }
+        return filter(initializer, predicate);
     }
 
     /**
@@ -235,6 +275,7 @@ public class LongCatheter {
         while (index < length) {
             // deleting 值为1则为被筛选掉的，忽略
             if (deleting[index] == 1) {
+                index++;
                 continue;
             }
 
@@ -252,24 +293,6 @@ public class LongCatheter {
 
     public LongCatheter overallFilter(final long initializer, final TriFunction<Integer, Long, Long, Boolean> predicate) {
         return overallFilter((index, item) -> predicate.apply(index, item, initializer));
-    }
-
-    public LongCatheter filter(final long initializer, final BiPredicate<Long, Long> predicate) {
-        return overallFilter((index, item) -> predicate.test(item, initializer));
-    }
-
-    public LongCatheter orFilter(final boolean succeed, final Predicate<Long> predicate) {
-        if (succeed) {
-            return this;
-        }
-        return filter(predicate);
-    }
-
-    public LongCatheter orFilter(final boolean succeed, final long initializer, final BiPredicate<Long, Long> predicate) {
-        if (succeed) {
-            return this;
-        }
-        return filter(initializer, predicate);
     }
 
     public LongCatheter distinct() {
@@ -887,47 +910,14 @@ public class LongCatheter {
 
     public static void main(String[] args) {
         LongCatheter source = LongCatheter.make(
-                1, 2, 3, 4,
-                5, 6, 7, 8
-        );
-        LongCatheter input = LongCatheter.make(
-                1, 5,
-                2, 6,
-                3, 7,
-                4, 8
+                1, 2, 3, 4, 5, 6, 7, 8
         );
 
-//        source.dump()
-//                .matrixHomoVary(3, input, (pos, sourceX, inputX) -> {
-//                    return sourceX - inputX;
-//                })
-//                .matrixEach(3, (pos, item) -> {
-//                    System.out.println(pos);
-//                    System.out.println(item);
-//                });
+        System.out.println("???");
 
-        System.out.println("------");
+        System.out.println(source.discard(x -> x < 5).list());
 
-        source.matrixMap(4, 2, input, (flockPos, sourcePos, inputPos, sourceX, inputX) -> {
-                    return sourceX * inputX;
-                }, (destPos, combine1, combine2) -> {
-                    return combine1 + combine2;
-                })
-                .matrixEach(2, (pos, item) -> {
-                    System.out.println(pos);
-                    System.out.println(item);
-                });
-
-//        LongCatheter.make(
-//                1, 2, 3, 4,
-//                5, 6, 7, 8
-//        ).matrixEach(4, (pos, item) -> {
-//            System.out.println(pos.x());
-//            System.out.println(pos.y());
-//            System.out.println(item);
-//        }).matrixHomoVary(4, input, (pos, sourceX, inputX) -> {
-//            return sourceX + inputX;
-//        });
+        System.out.println("???");
     }
 
     private static long[] array(int size) {

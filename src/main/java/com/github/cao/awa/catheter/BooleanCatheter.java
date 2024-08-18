@@ -235,6 +235,7 @@ public class BooleanCatheter {
         while (index < length) {
             // deleting 值为 true 则为被筛选掉的，忽略
             if (deleting[index]) {
+                index++;
                 continue;
             }
 

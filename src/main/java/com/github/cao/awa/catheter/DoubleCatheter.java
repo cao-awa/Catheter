@@ -190,8 +190,48 @@ public class DoubleCatheter {
         });
     }
 
+    public DoubleCatheter discard(final Predicate<Double> predicate) {
+        return overallFilter((index, item) -> !predicate.test(item));
+    }
+
+    public DoubleCatheter discard(final double initializer, final BiPredicate<Double, Double> predicate) {
+        return overallFilter((index, item) -> !predicate.test(item, initializer));
+    }
+
+    public DoubleCatheter orDiscard(final boolean succeed, final Predicate<Double> predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discard(predicate);
+    }
+
+    public DoubleCatheter orDiscard(final boolean succeed, final double initializer, final BiPredicate<Double, Double> predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discard(initializer, predicate);
+    }
+
     public DoubleCatheter filter(final Predicate<Double> predicate) {
         return overallFilter((index, item) -> predicate.test(item));
+    }
+
+    public DoubleCatheter filter(final double initializer, final BiPredicate<Double, Double> predicate) {
+        return overallFilter((index, item) -> predicate.test(item, initializer));
+    }
+
+    public DoubleCatheter orFilter(final boolean succeed, final Predicate<Double> predicate) {
+        if (succeed) {
+            return this;
+        }
+        return filter(predicate);
+    }
+
+    public DoubleCatheter orFilter(final boolean succeed, final double initializer, final BiPredicate<Double, Double> predicate) {
+        if (succeed) {
+            return this;
+        }
+        return filter(initializer, predicate);
     }
 
     /**
@@ -235,6 +275,7 @@ public class DoubleCatheter {
         while (index < length) {
             // deleting 值为1则为被筛选掉的，忽略
             if (deleting[index] == 1) {
+                index++;
                 continue;
             }
 
@@ -252,24 +293,6 @@ public class DoubleCatheter {
 
     public DoubleCatheter overallFilter(final double initializer, final TriFunction<Integer, Double, Double, Boolean> predicate) {
         return overallFilter((index, item) -> predicate.apply(index, item, initializer));
-    }
-
-    public DoubleCatheter filter(final double initializer, final BiPredicate<Double, Double> predicate) {
-        return overallFilter((index, item) -> predicate.test(item, initializer));
-    }
-
-    public DoubleCatheter orFilter(final boolean succeed, final Predicate<Double> predicate) {
-        if (succeed) {
-            return this;
-        }
-        return filter(predicate);
-    }
-
-    public DoubleCatheter orFilter(final boolean succeed, final double initializer, final BiPredicate<Double, Double> predicate) {
-        if (succeed) {
-            return this;
-        }
-        return filter(initializer, predicate);
     }
 
     public DoubleCatheter distinct() {
