@@ -17,6 +17,7 @@ import java.util.function.*;
 public class Catheter<T> {
     private static final Random RANDOM = new Random();
     private T[] targets;
+    private Function<Integer, T[]> arrayGenerator;
 
     public Catheter(T[] targets) {
         this.targets = targets;
@@ -28,17 +29,22 @@ public class Catheter<T> {
     }
 
     public static <X> Catheter<X> makeCapacity(int size) {
-        return new Catheter<>(array(size));
+        return new Catheter<>(xArray(size));
     }
 
     public static <X> Catheter<X> of(X[] targets) {
         return new Catheter<>(targets);
     }
 
+    public Catheter<T> arrayGenerator(Function<Integer, T[]> arrayGenerator) {
+        this.arrayGenerator = arrayGenerator;
+        return this;
+    }
+
     @SuppressWarnings("unchecked")
     public static <X> Catheter<X> of(Collection<X> targets) {
         if (targets == null) {
-            return new Catheter<>(array(0));
+            return new Catheter<>(xArray(0));
         }
         return new Catheter<>((X[]) targets.toArray(Object[]::new));
     }
@@ -559,7 +565,7 @@ public class Catheter<T> {
 
     public <X> Catheter<X> vary(final Function<T, X> handler) {
         final T[] ts = this.targets;
-        final X[] array = array(ts.length);
+        final X[] array = xArray(ts.length);
         final int length = ts.length;
         int index = 0;
         while (index < length) {
@@ -1154,7 +1160,15 @@ public class Catheter<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private static <X> X[] array(int size) {
+    private T[] array(int size) {
+        if (this.arrayGenerator != null) {
+            return this.arrayGenerator.apply(size);
+        }
+        return (T[]) new Object[size];
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <X> X[] xArray(int size) {
         return (X[]) new Object[size];
     }
 
