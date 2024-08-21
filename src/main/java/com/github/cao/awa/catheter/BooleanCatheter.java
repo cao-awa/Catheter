@@ -979,6 +979,10 @@ public class BooleanCatheter {
         return this.targets.clone();
     }
 
+    public boolean[] dArray() {
+        return this.targets;
+    }
+
     public List<Boolean> list() {
         List<Boolean> list = new ArrayList<>();
         for (boolean l : array()) {

@@ -1003,6 +1003,10 @@ public class LongCatheter {
         return this.targets.clone();
     }
 
+    public long[] dArray() {
+        return this.targets;
+    }
+
     public List<Long> list() {
         List<Long> list = new ArrayList<>();
         for (long l : array()) {

@@ -982,6 +982,10 @@ public class ByteCatheter {
         return this.targets.clone();
     }
 
+    public byte[] dArray() {
+        return this.targets;
+    }
+
     public List<Byte> list() {
         List<Byte> list = new ArrayList<>();
         for (byte l : array()) {

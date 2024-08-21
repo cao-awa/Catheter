@@ -1133,6 +1133,10 @@ public class Catheter<T> {
         return this.targets.clone();
     }
 
+    public T[] dArray() {
+        return this.targets;
+    }
+
     public List<T> list() {
         return Arrays.asList(array());
     }

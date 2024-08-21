@@ -1003,6 +1003,10 @@ public class DoubleCatheter {
         return this.targets.clone();
     }
 
+    public double[] dArray() {
+        return this.targets;
+    }
+
     public List<Double> list() {
         List<Double> list = new ArrayList<>();
         for (double l : array()) {
