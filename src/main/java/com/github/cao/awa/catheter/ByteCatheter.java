@@ -642,6 +642,31 @@ public class ByteCatheter {
         return 0;
     }
 
+    public <X> X whenFoundFirst(final Predicate<Byte> predicate, Function<Byte, X> function) {
+        final byte[] ts = this.targets;
+        final int length = ts.length;
+        int index = 0;
+        while (index < length) {
+            final byte t = ts[index++];
+            if (predicate.test(t)) {
+                return function.apply(t);
+            }
+        }
+        return null;
+    }
+
+    public <X> X whenFoundLast(final Predicate<Byte> predicate, Function<Byte, X> function) {
+        final byte[] ts = this.targets;
+        int index = ts.length - 1;
+        while (index > -1) {
+            final byte t = ts[index--];
+            if (predicate.test(t)) {
+                return function.apply(t);
+            }
+        }
+        return null;
+    }
+
     public ByteCatheter any(final Consumer<Byte> consumer) {
         if (this.targets.length > 0) {
             byte[] ls = this.targets;

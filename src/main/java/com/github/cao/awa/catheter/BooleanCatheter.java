@@ -638,6 +638,32 @@ public class BooleanCatheter {
         return false;
     }
 
+    public <X> X whenFoundFirst(final Predicate<Boolean> predicate, Function<Boolean, X> function) {
+        final boolean[] ts = this.targets;
+        final int length = ts.length;
+        int index = 0;
+        while (index < length) {
+            final boolean t = ts[index++];
+            if (predicate.test(t)) {
+                return function.apply(t);
+            }
+        }
+        return null;
+    }
+
+    public <X> X whenFoundLast(final Predicate<Boolean> predicate, Function<Boolean, X> function) {
+        final boolean[] ts = this.targets;
+        int index = ts.length - 1;
+        while (index > -1) {
+            final boolean t = ts[index--];
+            if (predicate.test(t)) {
+                return function.apply(t);
+            }
+        }
+        return null;
+    }
+
+
     public BooleanCatheter any(final Consumer<Boolean> consumer) {
         if (this.targets.length > 0) {
             boolean[] ls = this.targets;

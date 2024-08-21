@@ -612,6 +612,31 @@ public class DoubleCatheter {
         return 0.0D;
     }
 
+    public <X> X whenFoundFirst(final Predicate<Double> predicate, Function<Double, X> function) {
+        final double[] ts = this.targets;
+        final int length = ts.length;
+        int index = 0;
+        while (index < length) {
+            final double t = ts[index++];
+            if (predicate.test(t)) {
+                return function.apply(t);
+            }
+        }
+        return null;
+    }
+
+    public <X> X whenFoundLast(final Predicate<Double> predicate, Function<Double, X> function) {
+        final double[] ts = this.targets;
+        int index = ts.length - 1;
+        while (index > -1) {
+            final double t = ts[index--];
+            if (predicate.test(t)) {
+                return function.apply(t);
+            }
+        }
+        return null;
+    }
+
     public DoubleCatheter any(final Consumer<Double> consumer) {
         if (this.targets.length > 0) {
             double[] ls = this.targets;

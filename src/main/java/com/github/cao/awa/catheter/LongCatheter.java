@@ -663,6 +663,31 @@ public class LongCatheter {
         return 0;
     }
 
+    public <X> X whenFoundFirst(final Predicate<Long> predicate, Function<Long, X> function) {
+        final long[] ts = this.targets;
+        final int length = ts.length;
+        int index = 0;
+        while (index < length) {
+            final long t = ts[index++];
+            if (predicate.test(t)) {
+                return function.apply(t);
+            }
+        }
+        return null;
+    }
+
+    public <X> X whenFoundLast(final Predicate<Long> predicate, Function<Long, X> function) {
+        final long[] ts = this.targets;
+        int index = ts.length - 1;
+        while (index > -1) {
+            final long t = ts[index--];
+            if (predicate.test(t)) {
+                return function.apply(t);
+            }
+        }
+        return null;
+    }
+
     public LongCatheter any(final Consumer<Long> consumer) {
         if (this.targets.length > 0) {
             long[] ls = this.targets;
