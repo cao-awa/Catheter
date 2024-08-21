@@ -617,6 +617,31 @@ public class ByteCatheter {
         return true;
     }
 
+    public byte findFirst(final Predicate<Byte> predicate) {
+        final byte[] ts = this.targets;
+        final int length = ts.length;
+        int index = 0;
+        while (index < length) {
+            final byte t = ts[index++];
+            if (predicate.test(t)) {
+                return t;
+            }
+        }
+        return 0;
+    }
+
+    public byte findLast(final Predicate<Byte> predicate) {
+        final byte[] ts = this.targets;
+        int index = ts.length - 1;
+        while (index > -1) {
+            final byte t = ts[index--];
+            if (predicate.test(t)) {
+                return t;
+            }
+        }
+        return 0;
+    }
+
     public ByteCatheter any(final Consumer<Byte> consumer) {
         if (this.targets.length > 0) {
             byte[] ls = this.targets;

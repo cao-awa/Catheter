@@ -638,6 +638,31 @@ public class LongCatheter {
         return true;
     }
 
+    public long findFirst(final Predicate<Long> predicate) {
+        final long[] ts = this.targets;
+        final int length = ts.length;
+        int index = 0;
+        while (index < length) {
+            final long t = ts[index++];
+            if (predicate.test(t)) {
+                return t;
+            }
+        }
+        return 0;
+    }
+
+    public long findLast(final Predicate<Long> predicate) {
+        final long[] ts = this.targets;
+        int index = ts.length - 1;
+        while (index > -1) {
+            final long t = ts[index--];
+            if (predicate.test(t)) {
+                return t;
+            }
+        }
+        return 0;
+    }
+
     public LongCatheter any(final Consumer<Long> consumer) {
         if (this.targets.length > 0) {
             long[] ls = this.targets;

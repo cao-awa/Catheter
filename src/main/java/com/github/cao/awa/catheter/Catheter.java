@@ -650,6 +650,31 @@ public class Catheter<T> {
         return true;
     }
 
+    public T findFirst(final Predicate<T> predicate) {
+        final T[] ts = this.targets;
+        final int length = ts.length;
+        int index = 0;
+        while (index < length) {
+            final T t = ts[index++];
+            if (predicate.test(t)) {
+                return t;
+            }
+        }
+        return null;
+    }
+
+    public T findLast(final Predicate<T> predicate) {
+        final T[] ts = this.targets;
+        int index = ts.length - 1;
+        while (index > -1) {
+            final T t = ts[index--];
+            if (predicate.test(t)) {
+                return t;
+            }
+        }
+        return null;
+    }
+
     public Catheter<T> any(final Consumer<T> consumer) {
         if (this.targets.length > 0) {
             consumer.accept(select(this.targets, RANDOM));

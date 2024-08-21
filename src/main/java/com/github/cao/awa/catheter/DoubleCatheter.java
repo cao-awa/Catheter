@@ -587,6 +587,31 @@ public class DoubleCatheter {
         return true;
     }
 
+    public double findFirst(final Predicate<Double> predicate) {
+        final double[] ts = this.targets;
+        final int length = ts.length;
+        int index = 0;
+        while (index < length) {
+            final double t = ts[index++];
+            if (predicate.test(t)) {
+                return t;
+            }
+        }
+        return 0.0D;
+    }
+
+    public double findLast(final Predicate<Double> predicate) {
+        final double[] ts = this.targets;
+        int index = ts.length - 1;
+        while (index > -1) {
+            final double t = ts[index--];
+            if (predicate.test(t)) {
+                return t;
+            }
+        }
+        return 0.0D;
+    }
+
     public DoubleCatheter any(final Consumer<Double> consumer) {
         if (this.targets.length > 0) {
             double[] ls = this.targets;
