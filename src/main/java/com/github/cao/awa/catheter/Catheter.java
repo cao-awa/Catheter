@@ -1171,18 +1171,7 @@ public class Catheter<T> {
     }
 
     public static void main(String[] args) {
-        Catheter<String> strings = Catheter.make(
-                "123", "456", "789"
-        );
 
-        strings.flatted(str -> {
-            return Catheter.of(str.chars().boxed().collect(Collectors.toList()));
-        }).each(chars -> {
-            chars.each(c -> {
-                System.out.println(String.valueOf((char) c.intValue()));
-            });
-            System.out.println("----");
-        });
     }
 
     @SuppressWarnings("unchecked")
