@@ -1014,6 +1014,28 @@ public class ByteCatheter {
         return result;
     }
 
+    public <X> Catheter<X> flatToByCollection(Function<Byte, Collection<X>> function) {
+        Catheter<Collection<X>> catheter = Catheter.makeCapacity(count());
+        Receptacle<Integer> totalSize = new Receptacle<>(0);
+        alternate(0, (index, element) -> {
+            Collection<X> flatting = function.apply(element);
+            catheter.fetch(index, flatting);
+            totalSize.set(totalSize.get() + flatting.size());
+            return index + 1;
+        });
+
+        Catheter<X> result = Catheter.makeCapacity(totalSize.get());
+
+        catheter.alternate(0, (currentIndex, inner) -> {
+            int i = currentIndex;
+            for (X element : inner) {
+                result.fetch(i++, element);
+            }
+            return currentIndex;
+        });
+        return result;
+    }
+
     public ByteCatheter reset() {
         this.targets = array(0);
         return this;
