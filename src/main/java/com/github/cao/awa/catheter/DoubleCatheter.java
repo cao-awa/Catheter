@@ -994,22 +994,46 @@ public class DoubleCatheter {
         return new DoubleCatheter(array());
     }
 
-    public Catheter<DoubleCatheter> flat(Function<Double, DoubleCatheter> function) {
+    public DoubleCatheter flat(Function<Double, DoubleCatheter> function) {
         Catheter<DoubleCatheter> catheter = Catheter.makeCapacity(count());
+        Receptacle<Integer> totalSize = new Receptacle<>(0);
         alternate(0, (index, element) -> {
-            catheter.fetch(index, function.apply(element));
+            DoubleCatheter flatting = function.apply(element);
+            catheter.fetch(index, flatting);
+            totalSize.set(totalSize.get() + flatting.count());
             return index + 1;
         });
-        return catheter;
+
+        this.targets = array(totalSize.get());
+        catheter.alternate(0, (currentIndex, inner) -> {
+            return inner.alternate(currentIndex, (index, element) -> {
+                fetch(index, element);
+                return index + 1;
+            });
+        });
+        return this;
     }
 
-    public <X> Catheter<Catheter<X>> flatTo(Function<Double, Catheter<X>> function) {
+    public <X> Catheter<X> flatTo(Function<Double, Catheter<X>> function) {
         Catheter<Catheter<X>> catheter = Catheter.makeCapacity(count());
+        Receptacle<Integer> totalSize = new Receptacle<>(0);
         alternate(0, (index, element) -> {
-            catheter.fetch(index, function.apply(element));
+            Catheter<X> flatting = function.apply(element);
+            catheter.fetch(index, flatting);
+            totalSize.set(totalSize.get() + flatting.count());
             return index + 1;
         });
-        return catheter;
+
+        Catheter<X> result = Catheter.makeCapacity(totalSize.get());
+
+        this.targets = array(totalSize.get());
+        catheter.alternate(0, (currentIndex, inner) -> {
+            return inner.alternate(currentIndex, (index, element) -> {
+                result.fetch(index, element);
+                return index + 1;
+            });
+        });
+        return result;
     }
 
     public DoubleCatheter reset() {

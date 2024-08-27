@@ -9,11 +9,11 @@ import com.github.cao.awa.sinuatum.function.function.QuinFunction;
 import com.github.cao.awa.sinuatum.function.function.TriFunction;
 import org.jetbrains.annotations.Nullable;
 
-import java.sql.Array;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Catheter<T> {
     private static final Random RANDOM = new Random();
@@ -42,22 +42,46 @@ public class Catheter<T> {
         return this;
     }
 
-    public Catheter<Catheter<T>> flat(Function<T, Catheter<T>> function) {
+    public Catheter<T> flat(Function<T, Catheter<T>> function) {
         Catheter<Catheter<T>> catheter = Catheter.makeCapacity(count());
+        Receptacle<Integer> totalSize = new Receptacle<>(0);
         alternate(0, (index, element) -> {
-            catheter.fetch(index, function.apply(element));
+            Catheter<T> flatting = function.apply(element);
+            catheter.fetch(index, flatting);
+            totalSize.set(totalSize.get() + flatting.count());
             return index + 1;
         });
-        return catheter;
+
+        this.targets = array(totalSize.get());
+        catheter.alternate(0, (currentIndex, inner) -> {
+            return inner.alternate(currentIndex, (index, element) -> {
+                fetch(index, element);
+                return index + 1;
+            });
+        });
+        return this;
     }
 
-    public <X> Catheter<Catheter<X>> flatTo(Function<T, Catheter<X>> function) {
+    public <X> Catheter<X> flatTo(Function<T, Catheter<X>> function) {
         Catheter<Catheter<X>> catheter = Catheter.makeCapacity(count());
+        Receptacle<Integer> totalSize = new Receptacle<>(0);
         alternate(0, (index, element) -> {
-            catheter.fetch(index, function.apply(element));
+            Catheter<X> flatting = function.apply(element);
+            catheter.fetch(index, flatting);
+            totalSize.set(totalSize.get() + flatting.count());
             return index + 1;
         });
-        return catheter;
+
+        Catheter<X> result = Catheter.makeCapacity(totalSize.get());
+
+        this.targets = array(totalSize.get());
+        catheter.alternate(0, (currentIndex, inner) -> {
+            return inner.alternate(currentIndex, (index, element) -> {
+                result.fetch(index, element);
+                return index + 1;
+            });
+        });
+        return result;
     }
 
     @SuppressWarnings("unchecked")
@@ -1171,7 +1195,29 @@ public class Catheter<T> {
     }
 
     public static void main(String[] args) {
-        // Empty.
+        Catheter<String> strings = Catheter.make(
+                "123", "456", "789"
+        );
+
+        strings.flatTo(str -> {
+            return Catheter.of(str.chars().boxed().collect(Collectors.toList()));
+        }).each(chars -> {
+            System.out.println(String.valueOf((char) chars.intValue()));
+            System.out.println("----");
+        });
+
+        System.out.println("-- Stream");
+
+        Stream<String> s = Stream.of(
+                "123", "456", "789"
+        );
+
+        s.flatMap(str -> {
+            return str.chars().boxed();
+        }).forEach(chars -> {
+            System.out.println(String.valueOf((char) chars.intValue()));
+            System.out.println("----");
+        });
     }
 
     @SuppressWarnings("unchecked")
