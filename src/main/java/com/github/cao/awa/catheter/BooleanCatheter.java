@@ -982,10 +982,14 @@ public class BooleanCatheter {
 
         this.targets = array(totalSize.get());
         catheter.alternate(0, (currentIndex, inner) -> {
-            return inner.alternate(currentIndex, (index, element) -> {
-                fetch(index, element);
-                return index + 1;
-            });
+            int i = currentIndex;
+            int innerSize = inner.count();
+            while (innerSize > 0){
+                this.targets[i] = inner.fetch(i);
+                i++;
+                innerSize--;
+            }
+            return currentIndex;
         });
         return this;
     }
@@ -1003,10 +1007,14 @@ public class BooleanCatheter {
         Catheter<X> result = Catheter.makeCapacity(totalSize.get());
 
         catheter.alternate(0, (currentIndex, inner) -> {
-            return inner.alternate(currentIndex, (index, element) -> {
-                result.fetch(index, element);
-                return index + 1;
-            });
+            int i = currentIndex;
+            int innerSize = inner.count();
+            while (innerSize > 0){
+                result.fetch(i, inner.fetch(i));
+                i++;
+                innerSize--;
+            }
+            return currentIndex;
         });
         return result;
     }
