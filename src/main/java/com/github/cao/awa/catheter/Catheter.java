@@ -1171,7 +1171,7 @@ public class Catheter<T> {
     }
 
     public static void main(String[] args) {
-
+        // Empty.
     }
 
     @SuppressWarnings("unchecked")
