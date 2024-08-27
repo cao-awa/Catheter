@@ -1013,7 +1013,7 @@ public class DoubleCatheter {
                 i++;
                 innerSize--;
             }
-            return currentIndex;
+            return i;
         });
         return this;
     }
@@ -1038,7 +1038,7 @@ public class DoubleCatheter {
                 i++;
                 innerSize--;
             }
-            return currentIndex;
+            return i;
         });
         return result;
     }
@@ -1060,7 +1060,7 @@ public class DoubleCatheter {
             for (X element : inner) {
                 result.fetch(i++, element);
             }
-            return currentIndex;
+            return i;
         });
         return result;
     }

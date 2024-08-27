@@ -992,7 +992,7 @@ public class ByteCatheter {
                 i++;
                 innerSize--;
             }
-            return currentIndex;
+            return i;
         });
         return this;
     }
@@ -1017,7 +1017,7 @@ public class ByteCatheter {
                 i++;
                 innerSize--;
             }
-            return currentIndex;
+            return i;
         });
         return result;
     }
@@ -1039,7 +1039,7 @@ public class ByteCatheter {
             for (X element : inner) {
                 result.fetch(i++, element);
             }
-            return currentIndex;
+            return i;
         });
         return result;
     }

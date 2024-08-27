@@ -61,7 +61,7 @@ public class Catheter<T> {
                 i++;
                 innerSize--;
             }
-            return currentIndex;
+            return i;
         });
         return this;
     }
@@ -86,7 +86,7 @@ public class Catheter<T> {
                 i++;
                 innerSize--;
             }
-            return currentIndex;
+            return i;
         });
         return result;
     }
@@ -108,7 +108,7 @@ public class Catheter<T> {
             for (X element : inner) {
                 result.fetch(i++, element);
             }
-            return currentIndex;
+            return i;
         });
         return result;
     }

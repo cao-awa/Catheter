@@ -989,7 +989,7 @@ public class BooleanCatheter {
                 i++;
                 innerSize--;
             }
-            return currentIndex;
+            return i;
         });
         return this;
     }
@@ -1014,7 +1014,7 @@ public class BooleanCatheter {
                 i++;
                 innerSize--;
             }
-            return currentIndex;
+            return i;
         });
         return result;
     }
@@ -1036,7 +1036,7 @@ public class BooleanCatheter {
             for (X element : inner) {
                 result.fetch(i++, element);
             }
-            return currentIndex;
+            return i;
         });
         return result;
     }
