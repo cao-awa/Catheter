@@ -994,6 +994,24 @@ public class LongCatheter {
         return new LongCatheter(array());
     }
 
+    public Catheter<LongCatheter> flat(Function<Long, LongCatheter> function) {
+        Catheter<LongCatheter> catheter = Catheter.makeCapacity(count());
+        alternate(0, (index, element) -> {
+            catheter.fetch(index, function.apply(element));
+            return index + 1;
+        });
+        return catheter;
+    }
+
+    public <X> Catheter<Catheter<X>> flatTo(Function<Long, Catheter<X>> function) {
+        Catheter<Catheter<X>> catheter = Catheter.makeCapacity(count());
+        alternate(0, (index, element) -> {
+            catheter.fetch(index, function.apply(element));
+            return index + 1;
+        });
+        return catheter;
+    }
+
     public LongCatheter reset() {
         this.targets = array(0);
         return this;

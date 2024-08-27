@@ -13,6 +13,7 @@ import java.sql.Array;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
+import java.util.stream.Collectors;
 
 public class Catheter<T> {
     private static final Random RANDOM = new Random();
@@ -39,6 +40,24 @@ public class Catheter<T> {
     public Catheter<T> arrayGenerator(Function<Integer, T[]> arrayGenerator) {
         this.arrayGenerator = arrayGenerator;
         return this;
+    }
+
+    public Catheter<Catheter<T>> flat(Function<T, Catheter<T>> function) {
+        Catheter<Catheter<T>> catheter = Catheter.makeCapacity(count());
+        alternate(0, (index, element) -> {
+            catheter.fetch(index, function.apply(element));
+            return index + 1;
+        });
+        return catheter;
+    }
+
+    public <X> Catheter<Catheter<X>> flatTo(Function<T, Catheter<X>> function) {
+        Catheter<Catheter<X>> catheter = Catheter.makeCapacity(count());
+        alternate(0, (index, element) -> {
+            catheter.fetch(index, function.apply(element));
+            return index + 1;
+        });
+        return catheter;
     }
 
     @SuppressWarnings("unchecked")
@@ -1153,10 +1172,17 @@ public class Catheter<T> {
 
     public static void main(String[] args) {
         Catheter<String> strings = Catheter.make(
-                "1"
+                "123", "456", "789"
         );
 
-        System.out.println(strings.remove("1").list());
+        strings.flatted(str -> {
+            return Catheter.of(str.chars().boxed().collect(Collectors.toList()));
+        }).each(chars -> {
+            chars.each(c -> {
+                System.out.println(String.valueOf((char) c.intValue()));
+            });
+            System.out.println("----");
+        });
     }
 
     @SuppressWarnings("unchecked")

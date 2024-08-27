@@ -970,6 +970,24 @@ public class BooleanCatheter {
         return new BooleanCatheter(array());
     }
 
+    public Catheter<BooleanCatheter> flat(Function<Boolean, BooleanCatheter> function) {
+        Catheter<BooleanCatheter> catheter = Catheter.makeCapacity(count());
+        alternate(0, (index, element) -> {
+            catheter.fetch(index, function.apply(element));
+            return index + 1;
+        });
+        return catheter;
+    }
+
+    public <X> Catheter<Catheter<X>> flatTo(Function<Boolean, Catheter<X>> function) {
+        Catheter<Catheter<X>> catheter = Catheter.makeCapacity(count());
+        alternate(0, (index, element) -> {
+            catheter.fetch(index, function.apply(element));
+            return index + 1;
+        });
+        return catheter;
+    }
+
     public BooleanCatheter reset() {
         this.targets = array(0);
         return this;
