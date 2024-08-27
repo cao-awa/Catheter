@@ -975,73 +975,55 @@ public class ByteCatheter {
 
     public ByteCatheter flat(Function<Byte, ByteCatheter> function) {
         Catheter<ByteCatheter> catheter = Catheter.makeCapacity(count());
-        Receptacle<Integer> totalSize = new Receptacle<>(0);
-        alternate(0, (index, element) -> {
-            ByteCatheter flatting = function.apply(element);
-            catheter.fetch(index, flatting);
-            totalSize.set(totalSize.get() + flatting.count());
-            return index + 1;
-        });
+        int totalSize = 0;
 
-        this.targets = array(totalSize.get());
-        catheter.alternate(0, (currentIndex, inner) -> {
-            int i = currentIndex;
-            int innerSize = inner.count();
-            while (innerSize > 0){
-                this.targets[i] = inner.fetch(i);
-                i++;
-                innerSize--;
-            }
-            return i;
-        });
+        int index = 0;
+        for (byte element : this.targets) {
+            ByteCatheter flatting = function.apply(element);
+            catheter.fetch(index++, flatting);
+            totalSize += flatting.count();
+        }
+
+        this.targets = array(totalSize);
+        int pos = 0;
+        for (ByteCatheter flat : catheter.targets) {
+            System.arraycopy(flat.targets,
+                    0,
+                    this.targets,
+                    pos,
+                    flat.targets.length
+            );
+            pos += flat.targets.length;
+        }
         return this;
     }
 
     public <X> Catheter<X> flatTo(Function<Byte, Catheter<X>> function) {
         Catheter<Catheter<X>> catheter = Catheter.makeCapacity(count());
-        Receptacle<Integer> totalSize = new Receptacle<>(0);
-        alternate(0, (index, element) -> {
+        int totalSize = 0;
+
+        int index = 0;
+        for (byte element : this.targets) {
             Catheter<X> flatting = function.apply(element);
-            catheter.fetch(index, flatting);
-            totalSize.set(totalSize.get() + flatting.count());
-            return index + 1;
-        });
+            catheter.fetch(index++, flatting);
+            totalSize += flatting.count();
+        }
 
-        Catheter<X> result = Catheter.makeCapacity(totalSize.get());
-
-        catheter.alternate(0, (currentIndex, inner) -> {
-            int i = currentIndex;
-            int innerSize = inner.count();
-            while (innerSize > 0){
-                result.fetch(i, inner.fetch(i));
-                i++;
-                innerSize--;
-            }
-            return i;
-        });
-        return result;
+        return Catheter.flatting(catheter, totalSize);
     }
 
     public <X> Catheter<X> flatToByCollection(Function<Byte, Collection<X>> function) {
         Catheter<Collection<X>> catheter = Catheter.makeCapacity(count());
-        Receptacle<Integer> totalSize = new Receptacle<>(0);
-        alternate(0, (index, element) -> {
+        int totalSize = 0;
+
+        int index = 0;
+        for (byte element : this.targets) {
             Collection<X> flatting = function.apply(element);
-            catheter.fetch(index, flatting);
-            totalSize.set(totalSize.get() + flatting.size());
-            return index + 1;
-        });
+            catheter.fetch(index++, flatting);
+            totalSize += flatting.size();
+        }
 
-        Catheter<X> result = Catheter.makeCapacity(totalSize.get());
-
-        catheter.alternate(0, (currentIndex, inner) -> {
-            int i = currentIndex;
-            for (X element : inner) {
-                result.fetch(i++, element);
-            }
-            return i;
-        });
-        return result;
+        return Catheter.flattingByCollection(catheter, totalSize);
     }
 
     public ByteCatheter reset() {
