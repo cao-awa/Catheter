@@ -1005,7 +1005,6 @@ public class ByteCatheter {
 
         Catheter<X> result = Catheter.makeCapacity(totalSize.get());
 
-        this.targets = array(totalSize.get());
         catheter.alternate(0, (currentIndex, inner) -> {
             return inner.alternate(currentIndex, (index, element) -> {
                 result.fetch(index, element);
