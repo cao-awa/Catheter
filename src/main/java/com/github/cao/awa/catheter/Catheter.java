@@ -1,9 +1,11 @@
 package com.github.cao.awa.catheter;
 
+import com.github.cao.awa.catheter.action.*;
 import com.github.cao.awa.catheter.matrix.MatrixFlockPos;
 import com.github.cao.awa.catheter.matrix.MatrixPos;
-import com.github.cao.awa.catheter.pair.Pair;
+import com.github.cao.awa.catheter.pair.IntegerAndExtraPair;
 import com.github.cao.awa.catheter.receptacle.Receptacle;
+import com.github.cao.awa.catheter.receptacle.IntegerReceptacle;
 import com.github.cao.awa.sinuatum.function.consumer.TriConsumer;
 import com.github.cao.awa.sinuatum.function.function.QuinFunction;
 import com.github.cao.awa.sinuatum.function.function.TriFunction;
@@ -12,13 +14,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.LongStream;
 
 public class Catheter<T> {
     private static final Random RANDOM = new Random();
     protected T[] targets;
-    protected Function<Integer, T[]> arrayGenerator;
+    protected IntFunction<T[]> arrayGenerator;
 
     public Catheter(T[] targets) {
         this.targets = targets;
@@ -33,11 +34,15 @@ public class Catheter<T> {
         return new Catheter<>(xArray(size));
     }
 
+    public static <X> Catheter<X> makeCapacity(int size, IntFunction<X[]> arrayGenerator) {
+        return new Catheter<>(xArray(arrayGenerator, size)).arrayGenerator(arrayGenerator);
+    }
+
     public static <X> Catheter<X> of(X[] targets) {
         return new Catheter<>(targets);
     }
 
-    public Catheter<T> arrayGenerator(Function<Integer, T[]> arrayGenerator) {
+    public Catheter<T> arrayGenerator(IntFunction<T[]> arrayGenerator) {
         this.arrayGenerator = arrayGenerator;
         return this;
     }
@@ -81,7 +86,21 @@ public class Catheter<T> {
         return flatting(catheter, totalSize);
     }
 
-    public <X> Catheter<X> flatToByCollection(Function<T, Collection<X>> function) {
+    public <X> Catheter<X> arrayFlatTo(Function<T, X[]> function) {
+        Catheter<X[]> catheter = Catheter.makeCapacity(count());
+        int totalSize = 0;
+
+        int index = 0;
+        for (T element : this.targets) {
+            X[] flatting = function.apply(element);
+            catheter.fetch(index++, flatting);
+            totalSize += flatting.length;
+        }
+
+        return flattingArray(catheter, totalSize);
+    }
+
+    public <X> Catheter<X> collectionFlatTo(Function<T, Collection<X>> function) {
         Catheter<Collection<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -92,38 +111,62 @@ public class Catheter<T> {
             totalSize += flatting.size();
         }
 
-        return flattingByCollection(catheter, totalSize);
+        return flattingCollection(catheter, totalSize);
     }
 
+    @SuppressWarnings("unchecked")
     public static <X> Catheter<X> flatting(Catheter<Catheter<X>> catheter, int totalSize) {
         Catheter<X> result = Catheter.makeCapacity(totalSize);
 
-        Receptacle<Integer> pos = new Receptacle<>(0);
-        catheter.each(flat -> {
-            int curPos = pos.get();
-            System.arraycopy(flat.targets,
-                    0,
-                    result.targets,
-                    curPos,
-                    flat.targets.length
-            );
-            pos.set(curPos + flat.targets.length);
-        });
+        int pos = 0;
+        Object[] catheters = catheter.targets;
+        int i = 0;
+        while (i != catheters.length) {
+            Catheter<X> c = (Catheter<X>) catheters[i];
+            for (X target : c.targets) {
+                result.targets[pos++] = target;
+            }
+
+            i++;
+        }
 
         return result;
     }
 
-    public static <X> Catheter<X> flattingByCollection(Catheter<Collection<X>> catheter, int totalSize) {
+    @SuppressWarnings("unchecked")
+    public static <X> Catheter<X> flattingCollection(Catheter<Collection<X>> catheter, int totalSize) {
         Catheter<X> result = Catheter.makeCapacity(totalSize);
 
-        Receptacle<Integer> index = new Receptacle<>(0);
-        catheter.each(flat -> {
-            for (X element : flat) {
-                int curIndex = index.get();
-                result.fetch(curIndex, element);
-                index.set(curIndex + 1);
+        int pos = 0;
+        Object[] catheters = catheter.targets;
+        int i = 0;
+        while (i != catheters.length) {
+            Collection<X> c = (Collection<X>) catheters[i];
+            for (X element : c) {
+                result.targets[pos++] = element;
             }
-        });
+
+            i++;
+        }
+
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <X> Catheter<X> flattingArray(Catheter<X[]> catheter, int totalSize) {
+        Catheter<X> result = Catheter.makeCapacity(totalSize);
+
+        int pos = 0;
+        Object[] catheters = catheter.targets;
+        int i = 0;
+        while (i != catheters.length) {
+            X[] c = (X[]) catheters[i];
+            for (X element : c) {
+                result.targets[pos++] = element;
+            }
+
+            i++;
+        }
 
         return result;
     }
@@ -136,44 +179,38 @@ public class Catheter<T> {
         return new Catheter<>((X[]) targets.toArray(Object[]::new));
     }
 
+    @SuppressWarnings("unchecked")
+    public static <X> Catheter<X> of(Collection<X> targets, IntFunction<X[]> arrayGenerator) {
+        if (targets == null) {
+            return new Catheter<>(xArray(arrayGenerator, 0)).arrayGenerator(arrayGenerator);
+        }
+        return new Catheter<>(targets.toArray(arrayGenerator)).arrayGenerator(arrayGenerator);
+    }
+
     public Catheter<T> each(final Consumer<T> action) {
         final T[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(ts[index++]);
+        for (T t : ts) {
+            action.accept(t);
         }
         return this;
     }
 
     public Catheter<T> each(final Consumer<T> action, Runnable poster) {
-        final T[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(ts[index++]);
-        }
+        each(action);
         poster.run();
         return this;
     }
 
     public <X> Catheter<T> each(X initializer, final BiConsumer<X, T> action) {
         final T[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, ts[index++]);
+        for (T t : ts) {
+            action.accept(initializer, t);
         }
         return this;
     }
 
     public <X> Catheter<T> each(X initializer, final BiConsumer<X, T> action, Consumer<X> poster) {
-        final T[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, ts[index++]);
-        }
+        each(initializer, action);
         poster.accept(initializer);
         return this;
     }
@@ -181,64 +218,52 @@ public class Catheter<T> {
     public <X> Catheter<T> overall(X initializer, final TriConsumer<X, Integer, T> action) {
         final T[] ts = this.targets;
         int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, index, ts[index++]);
+        for (T t : ts) {
+            action.accept(initializer, index++, t);
         }
         return this;
     }
 
     public <X> Catheter<T> overall(X initializer, final TriConsumer<X, Integer, T> action, Consumer<X> poster) {
-        final T[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, index, ts[index++]);
-        }
+        overall(initializer, action);
         poster.accept(initializer);
         return this;
     }
 
-    public Catheter<T> overall(final BiConsumer<Integer, T> action) {
+    public Catheter<T> overall(final IntegerAndExtraConsumer<T> action) {
         final T[] ts = this.targets;
         int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(index, ts[index++]);
+        for (T t : ts) {
+            action.accept(index++, t);
         }
         return this;
     }
 
-    public Catheter<T> overall(final BiConsumer<Integer, T> action, Runnable poster) {
-        final T[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(index, ts[index++]);
-        }
+    public Catheter<T> overall(final IntegerAndExtraConsumer<T> action, Runnable poster) {
+        overall(action);
         poster.run();
         return this;
     }
 
-    public Catheter<T> insert(final TriFunction<Integer, T, T, T> maker) {
-        final Map<Integer, Pair<Integer, T>> indexes = new HashMap<>();
+    public Catheter<T> insert(final IntegerAndBiExtraToExtraFunction<T> maker) {
+        final Map<Integer, IntegerAndExtraPair<T>> indexes = new HashMap<>();
         final Receptacle<T> lastItem = new Receptacle<>(null);
         overall((index, item) -> {
             T result = maker.apply(index, item, lastItem.get());
             if (result != null) {
-                indexes.put(index + indexes.size(), new Pair<>(index, result));
+                indexes.put(index + indexes.size(), new IntegerAndExtraPair<>(index, result));
             }
             lastItem.set(item);
         });
 
         final T[] ts = this.targets;
         final T[] newDelegate = array(ts.length + indexes.size());
-        final Receptacle<Integer> lastIndex = new Receptacle<>(0);
-        final Receptacle<Integer> lastDest = new Receptacle<>(0);
-        of(indexes.keySet())
+        final IntegerReceptacle lastIndex = new IntegerReceptacle(0);
+        final IntegerReceptacle lastDest = new IntegerReceptacle(0);
+        IntCatheter.of(indexes.keySet())
                 .sort()
                 .each(index -> {
-                    if (lastIndex.get().intValue() != index) {
+                    if (lastIndex.get() != index) {
                         final int maxCopyLength = Math.min(
                                 newDelegate.length - lastDest.get() - 1,
                                 index - lastIndex.get()
@@ -251,9 +276,9 @@ public class Catheter<T> {
                                 maxCopyLength
                         );
                     }
-                    final Pair<Integer, T> item = indexes.get(index);
-                    newDelegate[index] = item.second();
-                    lastIndex.set(item.first());
+                    final IntegerAndExtraPair<T> item = indexes.get(index);
+                    newDelegate[index] = item.xValue();
+                    lastIndex.set(item.intValue());
                     lastDest.set(index + 1);
                 }, () -> {
                     System.arraycopy(
@@ -270,11 +295,10 @@ public class Catheter<T> {
         return this;
     }
 
-    public Catheter<T> pluck(final TriFunction<Integer, T, T, Boolean> maker) {
+    public Catheter<T> pluck(final IntegerAndBiExtraPredicate<T> maker) {
         final Receptacle<T> lastItem = new Receptacle<>(null);
         return overallFilter((index, item) -> {
-            final Boolean pluck = maker.apply(index, item, lastItem.get());
-            if (pluck != null && pluck) {
+            if (maker.test(index, item, lastItem.get())) {
                 return false;
             }
             lastItem.set(item);
@@ -361,7 +385,7 @@ public class Catheter<T> {
      * @author 草
      * @since 1.0.0
      */
-    public Catheter<T> overallFilter(final BiPredicate<Integer, T> predicate) {
+    public Catheter<T> overallFilter(final IntegerAndExtraPredicate<T> predicate) {
         // 创建需要的变量和常量
         final T[] ts = this.targets;
         final int length = ts.length;
@@ -369,9 +393,7 @@ public class Catheter<T> {
         int index = 0;
 
         // 遍历所有元素
-        while (index < length) {
-            T target = ts[index];
-
+        for (T target : ts) {
             // 符合条件的保留
             if (predicate.test(index, target)) {
                 index++;
@@ -390,9 +412,7 @@ public class Catheter<T> {
         index = 0;
 
         // 遍历所有元素
-        while (index < length) {
-            final T t = ts[index++];
-
+        for (T t : ts) {
             // 为null则为被筛选掉的，忽略
             if (t == null) {
                 continue;
@@ -418,8 +438,8 @@ public class Catheter<T> {
      * @author 草二号机
      * @since 1.0.0
      */
-    public <X> Catheter<T> overallFilter(final X initializer, final TriFunction<Integer, T, X, Boolean> predicate) {
-        return overallFilter((index, item) -> predicate.apply(index, item, initializer));
+    public <X> Catheter<T> overallFilter(final X initializer, final IntegerAndBiDiffExtraPredicate<T, X> predicate) {
+        return overallFilter((index, item) -> predicate.test(index, item, initializer));
     }
 
     /**
@@ -529,12 +549,10 @@ public class Catheter<T> {
     }
 
     public <X> X alternate(final X source, final BiFunction<X, T, X> maker) {
-        X result = source;
         final T[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            result = maker.apply(result, ts[index++]);
+        X result = source;
+        for (T t : ts) {
+            result = maker.apply(result, t);
         }
         return result;
     }
@@ -550,12 +568,10 @@ public class Catheter<T> {
     }
 
     public T flock(final T source, final BiFunction<T, T, T> maker) {
-        T result = source;
         final T[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            result = maker.apply(result, ts[index++]);
+        T result = source;
+        for (T t : ts) {
+            result = maker.apply(result, t);
         }
         return result;
     }
@@ -617,10 +633,8 @@ public class Catheter<T> {
 
     public Catheter<T> till(final Predicate<T> predicate) {
         final T[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
+        for (T t : ts) {
+            if (predicate.test(t)) {
                 break;
             }
         }
@@ -630,11 +644,12 @@ public class Catheter<T> {
 
     public int findTill(final Predicate<T> predicate) {
         final T[] ts = this.targets;
-        int index = 0, length = ts.length;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
+        int index = 0;
+        for (T t : ts) {
+            if (predicate.test(t)) {
                 break;
             }
+            index++;
         }
 
         return index;
@@ -642,31 +657,76 @@ public class Catheter<T> {
 
     public Catheter<T> replace(final Function<T, T> handler) {
         final T[] ts = this.targets;
-        final int length = ts.length;
         int index = 0;
-        while (index < length) {
-            ts[index] = handler.apply(ts[index++]);
+        for (T t : ts) {
+            ts[index++] = handler.apply(t);
         }
         return this;
+    }
+
+    public IntCatheter vary(final ToIntFunction<T> handler) {
+        final T[] ts = this.targets;
+        final int[] array = new int[ts.length];
+        int index = 0;
+        for (T t : ts) {
+            array[index++] = handler.applyAsInt(t);
+        }
+        return IntCatheter.of(array);
+    }
+
+    public LongCatheter vary(final ToLongFunction<T> handler) {
+        final T[] ts = this.targets;
+        final long[] array = new long[ts.length];
+        int index = 0;
+        for (T t : ts) {
+            array[index++] = handler.applyAsLong(t);
+        }
+        return LongCatheter.of(array);
+    }
+
+    public DoubleCatheter vary(final ToDoubleFunction<T> handler) {
+        final T[] ts = this.targets;
+        final double[] array = new double[ts.length];
+        int index = 0;
+        for (T t : ts) {
+            array[index++] = handler.applyAsDouble(t);
+        }
+        return DoubleCatheter.of(array);
+    }
+
+    public ByteCatheter vary(final ToByteFunction<T> handler) {
+        final T[] ts = this.targets;
+        final byte[] array = new byte[ts.length];
+        int index = 0;
+        for (T t : ts) {
+            array[index++] = handler.applyAsByte(t);
+        }
+        return ByteCatheter.of(array);
+    }
+
+    public BooleanCatheter vary(final Predicate<T> handler) {
+        final T[] ts = this.targets;
+        final boolean[] array = new boolean[ts.length];
+        int index = 0;
+        for (T t : ts) {
+            array[index++] = handler.test(t);
+        }
+        return BooleanCatheter.of(array);
     }
 
     public <X> Catheter<X> vary(final Function<T, X> handler) {
         final T[] ts = this.targets;
         final X[] array = xArray(ts.length);
-        final int length = ts.length;
         int index = 0;
-        while (index < length) {
-            array[index] = handler.apply(ts[index++]);
+        for (T t : ts) {
+            array[index++] = handler.apply(t);
         }
-        return new Catheter<>(array);
+        return Catheter.of(array);
     }
 
     public Catheter<T> whenAny(final Predicate<T> predicate, final Consumer<T> action) {
         final T[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final T t = ts[index++];
+        for (T t : ts) {
             if (predicate.test(t)) {
                 action.accept(t);
                 break;
@@ -677,13 +737,11 @@ public class Catheter<T> {
 
     public Catheter<T> whenAll(final Predicate<T> predicate, final Runnable action) {
         final T[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final T t = ts[index++];
-            if (!predicate.test(t)) {
-                return this;
+        for (T t : ts) {
+            if (predicate.test(t)) {
+                continue;
             }
+            return this;
         }
         action.run();
         return this;
@@ -695,10 +753,7 @@ public class Catheter<T> {
 
     private Catheter<T> whenNone(final Predicate<T> predicate, final Runnable action) {
         final T[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final T t = ts[index++];
+        for (T t : ts) {
             if (predicate.test(t)) {
                 return this;
             }
@@ -709,10 +764,8 @@ public class Catheter<T> {
 
     public boolean hasAny(final Predicate<T> predicate) {
         final T[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
+        for (T t : ts) {
+            if (predicate.test(t)) {
                 return true;
             }
         }
@@ -721,22 +774,19 @@ public class Catheter<T> {
 
     public boolean hasAll(final Predicate<T> predicate) {
         final T[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (!predicate.test(ts[index++])) {
-                return false;
+        for (T t : ts) {
+            if (predicate.test(t)) {
+                continue;
             }
+            return false;
         }
         return true;
     }
 
     public boolean hasNone(final Predicate<T> predicate) {
         final T[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
+        for (T t : ts) {
+            if (predicate.test(t)) {
                 return false;
             }
         }
@@ -745,10 +795,7 @@ public class Catheter<T> {
 
     public T findFirst(final Predicate<T> predicate) {
         final T[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final T t = ts[index++];
+        for (T t : ts) {
             if (predicate.test(t)) {
                 return t;
             }
@@ -770,10 +817,7 @@ public class Catheter<T> {
 
     public <X> X whenFoundFirst(final Predicate<T> predicate, Function<T, X> function) {
         final T[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final T t = ts[index++];
+        for (T t : ts) {
             if (predicate.test(t)) {
                 return function.apply(t);
             }
@@ -1020,7 +1064,7 @@ public class Catheter<T> {
 
     public <X, Y> Catheter<Y> matrixHomoVary(final int width, Catheter<X> input, final TriFunction<MatrixPos, T, X, Y> action) {
         if (input.count() == count()) {
-            final Receptacle<Integer> index = new Receptacle<>(0);
+            final IntegerReceptacle index = new IntegerReceptacle(0);
             return matrixVary(width, (pos, item) -> {
                 final int indexValue = index.get();
 
@@ -1140,8 +1184,8 @@ public class Catheter<T> {
             throw new IllegalArgumentException("The elements does not is a matrix");
         }
 
-        final Receptacle<Integer> w = new Receptacle<>(0);
-        final Receptacle<Integer> h = new Receptacle<>(0);
+        final IntegerReceptacle w = new IntegerReceptacle(0);
+        final IntegerReceptacle h = new IntegerReceptacle(0);
 
         final int matrixEdge = width - 1;
 
@@ -1164,12 +1208,12 @@ public class Catheter<T> {
             throw new IllegalArgumentException("The elements does not is a matrix");
         }
 
-        final Receptacle<Integer> w = new Receptacle<>(0);
-        final Receptacle<Integer> h = new Receptacle<>(0);
+        final IntegerReceptacle w = new IntegerReceptacle(0);
+        final IntegerReceptacle h = new IntegerReceptacle(0);
 
         final int matrixEdge = width - 1;
 
-        return vary(item -> {
+        return vary((T item) -> {
             final int hValue = h.get();
             final int wValue = w.get();
 
@@ -1239,29 +1283,82 @@ public class Catheter<T> {
     }
 
     public static void main(String[] args) {
+        test();
+        test();
+        test();
+    }
+
+    public static void test() {
+        System.out.println("####");
+        long[] catheterLongs = RANDOM.longs(16384 * 256).toArray();
+        long[] streamLongs = catheterLongs.clone();
+
+        System.out.println("-- Catheter");
+
         LongCatheter strings = LongCatheter.make(
-                123, 456, 789
+                catheterLongs
         );
 
-        strings.flatTo(str -> {
-            return Catheter.of(String.valueOf(str).chars().boxed().collect(Collectors.toList()));
-        }).each(chars -> {
-            System.out.println(String.valueOf((char) chars.intValue()));
-            System.out.println("----");
+        long start = System.currentTimeMillis();
+
+        LongCatheter c1 = strings
+                .arrayFlat(l -> {
+            long[] sp = new long[16];
+//            for (int i = 0; i < sp.length; i++) {
+//                sp[i] = (int) (l / (i + 1));
+//            }
+            Arrays.fill(sp, 1);
+            return sp;
+//            return Catheter.of(sp);
+        })
+                .replace(i -> (long) Math.sqrt(i * i * i))
+                .vary((long i) -> Math.sqrt(i * i * i) )
+                .vary((double i) -> (long) Math.sqrt(i * i * i))
+                .replace(i -> (long) Math.sqrt(i * i * i));
+
+        System.out.println("Flat done in " + (System.currentTimeMillis() - start) + "ms");
+
+//        c1.each(chars -> {
+//            int x = chars * chars;
+//        });
+
+        c1.each(i -> {
+
         });
+
+        System.out.println("Done in " + (System.currentTimeMillis() - start) + "ms");
 
         System.out.println("-- Stream");
 
-        Stream<String> s = Stream.of(
-                "123", "456", "789"
-        );
+        LongStream s = Arrays.stream(streamLongs);
 
-        s.flatMap(str -> {
-            return str.chars().boxed();
-        }).forEach(chars -> {
-            System.out.println(String.valueOf((char) chars.intValue()));
-            System.out.println("----");
+        start = System.currentTimeMillis();
+
+        LongStream s1 = s
+                .flatMap(l -> {
+                    long[] sp = new long[16];
+//            for (int i = 0; i < sp.length; i++) {
+//                sp[i] = (int) (l / (i + 1));
+//            }
+                    Arrays.fill(sp, 1);
+                    return Arrays.stream(sp);
+                })
+                .map(i -> (long) Math.sqrt(i * i * i))
+                .mapToDouble(i -> Math.sqrt(i * i * i))
+                .mapToLong(i -> (long) Math.sqrt(i * i * i))
+                .map(i -> (long) Math.sqrt(i * i * i));
+
+        System.out.println("Flat done in " + (System.currentTimeMillis() - start) + "ms");
+
+//        s1.forEach(chars -> {
+//            int x = chars * chars;
+//        });
+
+        s1.forEach(i -> {
+
         });
+
+        System.out.println("Done in " + (System.currentTimeMillis() - start) + "ms");
     }
 
     @SuppressWarnings("unchecked")
@@ -1275,6 +1372,10 @@ public class Catheter<T> {
     @SuppressWarnings("unchecked")
     private static <X> X[] xArray(int size) {
         return (X[]) new Object[size];
+    }
+
+    private static <X> X[] xArray(IntFunction<X[]> generator, int size) {
+        return generator.apply(size);
     }
 
     public static <T> T select(T[] array, int index) {

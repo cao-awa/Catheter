@@ -1,9 +1,11 @@
 package com.github.cao.awa.catheter;
 
+import com.github.cao.awa.catheter.action.*;
 import com.github.cao.awa.catheter.matrix.MatrixFlockPos;
 import com.github.cao.awa.catheter.matrix.MatrixPos;
-import com.github.cao.awa.catheter.pair.Pair;
+import com.github.cao.awa.catheter.pair.IntegerPair;
 import com.github.cao.awa.catheter.receptacle.Receptacle;
+import com.github.cao.awa.catheter.receptacle.IntegerReceptacle;
 import com.github.cao.awa.sinuatum.function.consumer.TriConsumer;
 import com.github.cao.awa.sinuatum.function.function.QuinFunction;
 import com.github.cao.awa.sinuatum.function.function.TriFunction;
@@ -44,44 +46,30 @@ public class IntCatheter {
         return new IntCatheter(delegate);
     }
 
-    public IntCatheter each(final Consumer<Integer> action) {
+    public IntCatheter each(final IntConsumer action) {
         final int[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(ts[index++]);
+        for (int i : ts) {
+            action.accept(i);
         }
         return this;
     }
 
-    public IntCatheter each(final Consumer<Integer> action, Runnable poster) {
-        final int[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(ts[index++]);
-        }
+    public IntCatheter each(final IntConsumer action, Runnable poster) {
+        each(action);
         poster.run();
         return this;
     }
 
     public <X> IntCatheter each(X initializer, final BiConsumer<X, Integer> action) {
         final int[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, ts[index++]);
+        for (int i : ts) {
+            action.accept(initializer, i);
         }
         return this;
     }
 
     public <X> IntCatheter each(X initializer, final BiConsumer<X, Integer> action, Consumer<X> poster) {
-        final int[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, ts[index++]);
-        }
+        each(initializer, action);
         poster.accept(initializer);
         return this;
     }
@@ -89,64 +77,52 @@ public class IntCatheter {
     public <X> IntCatheter overall(X initializer, final TriConsumer<X, Integer, Integer> action) {
         final int[] ts = this.targets;
         int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, index, ts[index++]);
+        for (int i : ts) {
+            action.accept(initializer, index++, i);
         }
         return this;
     }
 
     public <X> IntCatheter overall(X initializer, final TriConsumer<X, Integer, Integer> action, Consumer<X> poster) {
-        final int[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, index, ts[index++]);
-        }
+        overall(initializer, action);
         poster.accept(initializer);
         return this;
     }
 
-    public IntCatheter overall(final BiConsumer<Integer, Integer> action) {
+    public IntCatheter overall(final BiIntegerConsumer action) {
         final int[] ts = this.targets;
         int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(index, ts[index++]);
+        for (int i : ts) {
+            action.accept(index++, i);
         }
         return this;
     }
 
-    public IntCatheter overall(final BiConsumer<Integer, Integer> action, Runnable poster) {
-        final int[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(index, ts[index++]);
-        }
+    public IntCatheter overall(final BiIntegerConsumer action, Runnable poster) {
+        overall(action);
         poster.run();
         return this;
     }
 
-    public IntCatheter insert(final TriFunction<Integer, Integer, Integer, Integer> maker) {
-        final Map<Integer, Pair<Integer, Integer>> indexes = new HashMap<>();
-        final Receptacle<Integer> lastItem = new Receptacle<>(null);
+    public IntCatheter insert(final TriIntegerToIntegerFunction maker) {
+        final Map<Integer, IntegerPair> indexes = new HashMap<>();
+        final IntegerReceptacle lastItem = new IntegerReceptacle(0);
         overall((index, item) -> {
-            Integer result = maker.apply(index, item, lastItem.get());
-            if (result != null) {
-                indexes.put(index + indexes.size(), new Pair<>(index, result));
-            }
+            indexes.put(
+                    index + indexes.size(),
+                    new IntegerPair(index, maker.apply(index, item, lastItem.get()))
+            );
             lastItem.set(item);
         });
 
         final int[] ts = this.targets;
         final int[] newDelegate = array(ts.length + indexes.size());
-        final Receptacle<Integer> lastIndex = new Receptacle<>(0);
-        final Receptacle<Integer> lastDest = new Receptacle<>(0);
-        Catheter.of(indexes.keySet())
+        final IntegerReceptacle lastIndex = new IntegerReceptacle(0);
+        final IntegerReceptacle lastDest = new IntegerReceptacle(0);
+        IntCatheter.of(indexes.keySet())
                 .sort()
                 .each(index -> {
-                    if (lastIndex.get().intValue() != index) {
+                    if (lastIndex.get() != index) {
                         final int maxCopyLength = Math.min(
                                 newDelegate.length - lastDest.get() - 1,
                                 index - lastIndex.get()
@@ -159,7 +135,7 @@ public class IntCatheter {
                                 maxCopyLength
                         );
                     }
-                    final Pair<Integer, Integer> item = indexes.get(index);
+                    final IntegerPair item = indexes.get(index);
                     newDelegate[index] = item.second();
                     lastIndex.set(item.first());
                     lastDest.set(index + 1);
@@ -178,11 +154,10 @@ public class IntCatheter {
         return this;
     }
 
-    public IntCatheter pluck(final TriFunction<Integer, Integer, Integer, Boolean> maker) {
-        final Receptacle<Integer> lastItem = new Receptacle<>(null);
+    public IntCatheter pluck(final TriIntegerPredicate maker) {
+        final IntegerReceptacle lastItem = new IntegerReceptacle(0);
         return overallFilter((index, item) -> {
-            final Boolean pluck = maker.apply(index, item, lastItem.get());
-            if (pluck != null && pluck) {
+            if (maker.test(index, item, lastItem.get())) {
                 return false;
             }
             lastItem.set(item);
@@ -190,44 +165,44 @@ public class IntCatheter {
         });
     }
 
-    public IntCatheter discard(final Predicate<Integer> predicate) {
+    public IntCatheter discard(final IntPredicate predicate) {
         return overallFilter((index, item) -> !predicate.test(item));
     }
 
-    public IntCatheter discard(final int initializer, final BiPredicate<Integer, Integer> predicate) {
+    public IntCatheter discard(final int initializer, final BiIntegerPredicate predicate) {
         return overallFilter((index, item) -> !predicate.test(item, initializer));
     }
 
-    public IntCatheter orDiscard(final boolean succeed, final Predicate<Integer> predicate) {
+    public IntCatheter orDiscard(final boolean succeed, final IntPredicate predicate) {
         if (succeed) {
             return this;
         }
         return discard(predicate);
     }
 
-    public IntCatheter orDiscard(final boolean succeed, final int initializer, final BiPredicate<Integer, Integer> predicate) {
+    public IntCatheter orDiscard(final boolean succeed, final int initializer, final BiIntegerPredicate predicate) {
         if (succeed) {
             return this;
         }
         return discard(initializer, predicate);
     }
 
-    public IntCatheter filter(final Predicate<Integer> predicate) {
+    public IntCatheter filter(final IntPredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item));
     }
 
-    public IntCatheter filter(final int initializer, final BiPredicate<Integer, Integer> predicate) {
+    public IntCatheter filter(final int initializer, final BiIntegerPredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item, initializer));
     }
 
-    public IntCatheter orFilter(final boolean succeed, final Predicate<Integer> predicate) {
+    public IntCatheter orFilter(final boolean succeed, final IntPredicate predicate) {
         if (succeed) {
             return this;
         }
         return filter(predicate);
     }
 
-    public IntCatheter orFilter(final boolean succeed, final int initializer, final BiPredicate<Integer, Integer> predicate) {
+    public IntCatheter orFilter(final boolean succeed, final int initializer, final BiIntegerPredicate predicate) {
         if (succeed) {
             return this;
         }
@@ -242,7 +217,7 @@ public class IntCatheter {
      * @author 草
      * @since 1.0.0
      */
-    public IntCatheter overallFilter(final BiPredicate<Integer, Integer> predicate) {
+    public IntCatheter overallFilter(final BiIntegerPredicate predicate) {
         // 创建需要的变量和常量
         final int[] ts = this.targets;
         final int length = ts.length;
@@ -251,9 +226,7 @@ public class IntCatheter {
         int index = 0;
 
         // 遍历所有元素
-        while (index < length) {
-            int target = ts[index];
-
+        for (int target : ts) {
             // 符合条件的保留
             if (predicate.test(index, target)) {
                 index++;
@@ -272,9 +245,9 @@ public class IntCatheter {
         index = 0;
 
         // 遍历所有元素
-        while (index < length) {
+        for (int isDeleting : deleting) {
             // deleting 值为1则为被筛选掉的，忽略
-            if (deleting[index] == 1) {
+            if (isDeleting == 1) {
                 index++;
                 continue;
             }
@@ -291,8 +264,8 @@ public class IntCatheter {
         return this;
     }
 
-    public IntCatheter overallFilter(final int initializer, final TriFunction<Integer, Integer, Integer, Boolean> predicate) {
-        return overallFilter((index, item) -> predicate.apply(index, item, initializer));
+    public IntCatheter overallFilter(final int initializer, final TriIntegerPredicate predicate) {
+        return overallFilter((index, item) -> predicate.test(index, item, initializer));
     }
 
     public boolean isPresent() {
@@ -397,7 +370,7 @@ public class IntCatheter {
         return this;
     }
 
-    public IntCatheter holdTill(final Predicate<Integer> predicate) {
+    public IntCatheter holdTill(final IntPredicate predicate) {
         final int index = findTill(predicate);
 
         final int[] ts = this.targets;
@@ -416,23 +389,21 @@ public class IntCatheter {
         return this;
     }
 
-    public IntCatheter whenFlock(final Integer source, final BiFunction<Integer, Integer, Integer> maker, Consumer<Integer> consumer) {
+    public IntCatheter whenFlock(final int source, final BiIntegerToIntegerFunction maker, IntConsumer consumer) {
         consumer.accept(flock(source, maker));
         return this;
     }
 
-    public IntCatheter whenFlock(BiFunction<Integer, Integer, Integer> maker, Consumer<Integer> consumer) {
+    public IntCatheter whenFlock(BiIntegerToIntegerFunction maker, IntConsumer consumer) {
         consumer.accept(flock(maker));
         return this;
     }
 
     public <X> X alternate(final X source, final BiFunction<X, Integer, X> maker) {
-        X result = source;
         final int[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            result = maker.apply(result, ts[index++]);
+        X result = source;
+        for (int i : ts) {
+            result = maker.apply(result, i);
         }
         return result;
     }
@@ -447,23 +418,21 @@ public class IntCatheter {
         return this;
     }
 
-    public int flock(final int source, final BiFunction<Integer, Integer, Integer> maker) {
-        int result = source;
+    public int flock(final int source, final BiIntegerToIntegerFunction maker) {
         final int[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            result = maker.apply(result, ts[index++]);
+        int result = source;
+        for (int i : ts) {
+            result = maker.applyAsInt(result, i);
         }
         return result;
     }
 
-    public int flock(final BiFunction<Integer, Integer, Integer> maker) {
+    public int flock(final BiIntegerToIntegerFunction maker) {
         final int[] ts = this.targets;
         final int length = ts.length;
         int result = length > 0 ? ts[0] : 0;
-        for (int i = 1; i < length; i++) {
-            result = maker.apply(result, ts[i]);
+        for (int i : ts) {
+            result = maker.applyAsInt(result, i);
         }
         return result;
     }
@@ -488,7 +457,7 @@ public class IntCatheter {
         return this;
     }
 
-    public IntCatheter waiveTill(final Predicate<Integer> predicate) {
+    public IntCatheter waiveTill(final IntPredicate predicate) {
         final int index = findTill(predicate);
 
         final int[] ts = this.targets;
@@ -510,12 +479,10 @@ public class IntCatheter {
         return this;
     }
 
-    public IntCatheter till(final Predicate<Integer> predicate) {
+    public IntCatheter till(final IntPredicate predicate) {
         final int[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
+        for (int i : ts) {
+            if (predicate.test(i)) {
                 break;
             }
         }
@@ -523,78 +490,113 @@ public class IntCatheter {
         return this;
     }
 
-    public int findTill(final Predicate<Integer> predicate) {
+    public int findTill(final IntPredicate predicate) {
         final int[] ts = this.targets;
-        int index = 0, length = ts.length;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
+        int index = 0;
+        for (int i : ts) {
+            if (predicate.test(i)) {
                 break;
             }
+            index++;
         }
 
         return index;
     }
 
-    public IntCatheter replace(final Function<Integer, Integer> handler) {
+    public IntCatheter replace(final IntUnaryOperator handler) {
         final int[] ts = this.targets;
-        final int length = ts.length;
         int index = 0;
-        while (index < length) {
-            ts[index] = handler.apply(ts[index++]);
+        for (int i : ts) {
+            ts[index++] = handler.applyAsInt(i);
         }
         return this;
     }
 
-    public <X> Catheter<X> vary(final Function<Integer, X> handler) {
+    public ByteCatheter vary(final IntegerToByteFunction handler) {
         final int[] ts = this.targets;
-        final X[] array = xArray(ts.length);
-        final int length = ts.length;
+        final byte[] array = new byte[ts.length];
         int index = 0;
-        while (index < length) {
-            array[index] = handler.apply(ts[index++]);
+        for (int i : ts) {
+            array[index++] = handler.applyAsByte(i);
         }
-        return new Catheter<>(array);
+        return ByteCatheter.of(array);
     }
 
-    public IntCatheter whenAny(final Predicate<Integer> predicate, final Consumer<Integer> action) {
+    public BooleanCatheter vary(final IntPredicate handler) {
         final int[] ts = this.targets;
-        final int length = ts.length;
+        final boolean[] array = new boolean[ts.length];
         int index = 0;
-        while (index < length) {
-            final int t = ts[index++];
-            if (predicate.test(t)) {
-                action.accept(t);
+        for (int i : ts) {
+            array[index++] = handler.test(i);
+        }
+        return BooleanCatheter.of(array);
+    }
+
+    public DoubleCatheter vary(final IntToDoubleFunction handler) {
+        final int[] ts = this.targets;
+        final double[] array = new double[ts.length];
+        int index = 0;
+        for (int i : ts) {
+            array[index++] = handler.applyAsDouble(i);
+        }
+        return DoubleCatheter.of(array);
+    }
+
+    public IntCatheter vary(final IntUnaryOperator handler) {
+        return replace(handler);
+    }
+
+    public LongCatheter vary(final IntToLongFunction handler) {
+        final int[] ts = this.targets;
+        final long[] array = new long[ts.length];
+        int index = 0;
+        for (int i : ts) {
+            array[index++] = handler.applyAsLong(i);
+        }
+        return LongCatheter.of(array);
+    }
+
+    public <X> Catheter<X> vary(final IntFunction<X> handler) {
+        final int[] ts = this.targets;
+        final X[] array = xArray(ts.length);
+        int index = 0;
+        for (int i : ts) {
+            array[index++] = handler.apply(i);
+        }
+        return Catheter.of(array);
+    }
+
+    public IntCatheter whenAny(final IntPredicate predicate, final IntConsumer action) {
+        final int[] ts = this.targets;
+        for (int i : ts) {
+            if (predicate.test(i)) {
+                action.accept(i);
                 break;
             }
         }
         return this;
     }
 
-    public IntCatheter whenAll(final Predicate<Integer> predicate, final Runnable action) {
+    public IntCatheter whenAll(final IntPredicate predicate, final Runnable action) {
         final int[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final int t = ts[index++];
-            if (!predicate.test(t)) {
-                return this;
+        for (int i : ts) {
+            if (predicate.test(i)) {
+                continue;
             }
+            return this;
         }
         action.run();
         return this;
     }
 
-    public IntCatheter whenAll(final Predicate<Integer> predicate, final Consumer<Integer> action) {
+    public IntCatheter whenAll(final IntPredicate predicate, final IntConsumer action) {
         return whenAll(predicate, () -> each(action));
     }
 
-    private IntCatheter whenNone(final Predicate<Integer> predicate, final Runnable action) {
+    private IntCatheter whenNone(final IntPredicate predicate, final Runnable action) {
         final int[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final int t = ts[index++];
-            if (predicate.test(t)) {
+        for (int i : ts) {
+            if (predicate.test(i)) {
                 return this;
             }
         }
@@ -602,56 +604,48 @@ public class IntCatheter {
         return this;
     }
 
-    public boolean hasAny(final Predicate<Integer> predicate) {
+    public boolean hasAny(final IntPredicate predicate) {
         final int[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
+        for (int i : ts) {
+            if (predicate.test(i)) {
                 return true;
             }
         }
         return false;
     }
 
-    public boolean hasAll(final Predicate<Integer> predicate) {
+    public boolean hasAll(final IntPredicate predicate) {
         final int[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (!predicate.test(ts[index++])) {
+        for (int i : ts) {
+            if (predicate.test(i)) {
+                continue;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    public boolean hasNone(final IntPredicate predicate) {
+        final int[] ts = this.targets;
+        for (int i : ts) {
+            if (predicate.test(i)) {
                 return false;
             }
         }
         return true;
     }
 
-    public boolean hasNone(final Predicate<Integer> predicate) {
+    public int findFirst(final IntPredicate predicate) {
         final int[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public int findFirst(final Predicate<Integer> predicate) {
-        final int[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final int t = ts[index++];
-            if (predicate.test(t)) {
-                return t;
+        for (int i : ts) {
+            if (predicate.test(i)) {
+                return i;
             }
         }
         return 0;
     }
 
-    public int findLast(final Predicate<Integer> predicate) {
+    public int findLast(final IntPredicate predicate) {
         final int[] ts = this.targets;
         int index = ts.length - 1;
         while (index > -1) {
@@ -663,32 +657,27 @@ public class IntCatheter {
         return 0;
     }
 
-    public <X> X whenFoundFirst(final Predicate<Integer> predicate, Function<Integer, X> function) {
+    public <X> X whenFoundFirst(final IntPredicate predicate, IntFunction<X> function) {
         final int[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final int t = ts[index++];
-            if (predicate.test(t)) {
-                return function.apply(t);
+        for (int i : ts) {
+            if (predicate.test(i)) {
+                return function.apply(i);
             }
         }
         return null;
     }
 
-    public <X> X whenFoundLast(final Predicate<Integer> predicate, Function<Integer, X> function) {
+    public <X> X whenFoundLast(final IntPredicate predicate, IntFunction<X> function) {
         final int[] ts = this.targets;
-        int index = ts.length - 1;
-        while (index > -1) {
-            final int t = ts[index--];
-            if (predicate.test(t)) {
-                return function.apply(t);
+        for (int i : ts) {
+            if (predicate.test(i)) {
+                return function.apply(i);
             }
         }
         return null;
     }
 
-    public IntCatheter any(final Consumer<Integer> consumer) {
+    public IntCatheter any(final IntConsumer consumer) {
         if (this.targets.length > 0) {
             int[] ls = this.targets;
             int index = RANDOM.nextInt(ls.length);
@@ -697,14 +686,14 @@ public class IntCatheter {
         return this;
     }
 
-    public IntCatheter first(final Consumer<Integer> consumer) {
+    public IntCatheter first(final IntConsumer consumer) {
         if (this.targets.length > 0) {
             consumer.accept(this.targets[0]);
         }
         return this;
     }
 
-    public IntCatheter tail(final Consumer<Integer> consumer) {
+    public IntCatheter tail(final IntConsumer consumer) {
         if (this.targets.length > 0) {
             consumer.accept(this.targets[this.targets.length - 1]);
         }
@@ -734,18 +723,14 @@ public class IntCatheter {
         return flock((result, element) -> comparator.compare(result, element) > 0 ? element : result);
     }
 
-    public IntCatheter whenMax(final Comparator<Integer> comparator, final Consumer<Integer> action) {
+    public IntCatheter whenMax(final Comparator<Integer> comparator, final IntConsumer action) {
         action.accept(flock((result, element) -> comparator.compare(result, element) < 0 ? element : result));
         return this;
     }
 
-    public IntCatheter whenMin(final Comparator<Integer> comparator, final Consumer<Integer> action) {
+    public IntCatheter whenMin(final Comparator<Integer> comparator, final IntConsumer action) {
         action.accept(flock((result, element) -> comparator.compare(result, element) > 0 ? element : result));
         return this;
-    }
-
-    private IntCatheter exists() {
-        return filter(Objects::nonNull);
     }
 
     public int count() {
@@ -762,12 +747,11 @@ public class IntCatheter {
         return this;
     }
 
-    public IntCatheter count(final Consumer<Integer> consumer) {
+    public IntCatheter count(final IntConsumer consumer) {
         consumer.accept(count());
         return this;
     }
 
-    @SafeVarargs
     public final IntCatheter append(final int... objects) {
         final int[] ts = this.targets;
         final int[] newDelegate = array(ts.length + objects.length);
@@ -818,7 +802,7 @@ public class IntCatheter {
 
     public <X> Catheter<X> matrixHomoVary(final int width, IntCatheter input, final TriFunction<MatrixPos, Integer, Integer, X> action) {
         if (input.count() == count()) {
-            final Receptacle<Integer> index = new Receptacle<>(0);
+            final IntegerReceptacle index = new IntegerReceptacle(0);
             return matrixVary(width, (pos, item) -> {
                 final int indexValue = index.get();
 
@@ -917,8 +901,8 @@ public class IntCatheter {
             throw new IllegalArgumentException("The elements does not is a matrix");
         }
 
-        final Receptacle<Integer> w = new Receptacle<>(0);
-        final Receptacle<Integer> h = new Receptacle<>(0);
+        final IntegerReceptacle w = new IntegerReceptacle(0);
+        final IntegerReceptacle h = new IntegerReceptacle(0);
 
         final int matrixEdge = width - 1;
 
@@ -941,12 +925,12 @@ public class IntCatheter {
             throw new IllegalArgumentException("The elements does not is a matrix");
         }
 
-        final Receptacle<Integer> w = new Receptacle<>(0);
-        final Receptacle<Integer> h = new Receptacle<>(0);
+        final IntegerReceptacle w = new IntegerReceptacle(0);
+        final IntegerReceptacle h = new IntegerReceptacle(0);
 
         final int matrixEdge = width - 1;
 
-        return vary(item -> {
+        return vary((int item) -> {
             final int hValue = h.get();
             final int wValue = w.get();
 
@@ -994,7 +978,7 @@ public class IntCatheter {
         return new IntCatheter(array());
     }
 
-    public IntCatheter flat(Function<Integer, IntCatheter> function) {
+    public IntCatheter flat(IntFunction<IntCatheter> function) {
         Catheter<IntCatheter> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -1019,7 +1003,7 @@ public class IntCatheter {
         return this;
     }
 
-    public <X> Catheter<X> flatTo(Function<Integer, Catheter<X>> function) {
+    public <X> Catheter<X> flatTo(IntFunction<Catheter<X>> function) {
         Catheter<Catheter<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -1033,7 +1017,7 @@ public class IntCatheter {
         return Catheter.flatting(catheter, totalSize);
     }
 
-    public <X> Catheter<X> flatToByCollection(Function<Integer, Collection<X>> function) {
+    public <X> Catheter<X> flatToByCollection(IntFunction<Collection<X>> function) {
         Catheter<Collection<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -1044,7 +1028,7 @@ public class IntCatheter {
             totalSize += flatting.size();
         }
 
-        return Catheter.flattingByCollection(catheter, totalSize);
+        return Catheter.flattingCollection(catheter, totalSize);
     }
 
     public IntCatheter reset() {

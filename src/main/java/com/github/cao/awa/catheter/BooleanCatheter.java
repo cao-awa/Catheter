@@ -1,8 +1,12 @@
 package com.github.cao.awa.catheter;
 
+import com.github.cao.awa.catheter.action.*;
 import com.github.cao.awa.catheter.matrix.MatrixFlockPos;
 import com.github.cao.awa.catheter.matrix.MatrixPos;
+import com.github.cao.awa.catheter.pair.IntegerAndBooleanPair;
 import com.github.cao.awa.catheter.pair.Pair;
+import com.github.cao.awa.catheter.receptacle.BooleanReceptacle;
+import com.github.cao.awa.catheter.receptacle.IntegerReceptacle;
 import com.github.cao.awa.catheter.receptacle.Receptacle;
 import com.github.cao.awa.sinuatum.function.consumer.TriConsumer;
 import com.github.cao.awa.sinuatum.function.function.QuinFunction;
@@ -44,44 +48,30 @@ public class BooleanCatheter {
         return new BooleanCatheter(delegate);
     }
 
-    public BooleanCatheter each(final Consumer<Boolean> action) {
+    public BooleanCatheter each(final BooleanConsumer action) {
         final boolean[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(ts[index++]);
+        for (boolean b : ts) {
+            action.accept(b);
         }
         return this;
     }
 
-    public BooleanCatheter each(final Consumer<Boolean> action, Runnable poster) {
-        final boolean[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(ts[index++]);
-        }
+    public BooleanCatheter each(final BooleanConsumer action, Runnable poster) {
+        each(action);
         poster.run();
         return this;
     }
 
     public <X> BooleanCatheter each(X initializer, final BiConsumer<X, Boolean> action) {
         final boolean[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, ts[index++]);
+        for (boolean b : ts) {
+            action.accept(initializer, b);
         }
         return this;
     }
 
     public <X> BooleanCatheter each(X initializer, final BiConsumer<X, Boolean> action, Consumer<X> poster) {
-        final boolean[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, ts[index++]);
-        }
+        each(initializer, action);
         poster.accept(initializer);
         return this;
     }
@@ -89,64 +79,52 @@ public class BooleanCatheter {
     public <X> BooleanCatheter overall(X initializer, final TriConsumer<X, Integer, Boolean> action) {
         final boolean[] ts = this.targets;
         int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, index, ts[index++]);
+        for (boolean b : ts) {
+            action.accept(initializer, index++, b);
         }
         return this;
     }
 
     public <X> BooleanCatheter overall(X initializer, final TriConsumer<X, Integer, Boolean> action, Consumer<X> poster) {
-        final boolean[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, index, ts[index++]);
-        }
+        overall(initializer, action);
         poster.accept(initializer);
         return this;
     }
 
-    public BooleanCatheter overall(final BiConsumer<Integer, Boolean> action) {
+    public BooleanCatheter overall(final IntegerAndBooleanConsumer action) {
         final boolean[] ts = this.targets;
         int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(index, ts[index++]);
+        for (boolean b : ts) {
+            action.accept(index++, b);
         }
         return this;
     }
 
-    public BooleanCatheter overall(final BiConsumer<Integer, Boolean> action, Runnable poster) {
-        final boolean[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(index, ts[index++]);
-        }
+    public BooleanCatheter overall(final IntegerAndBooleanConsumer action, Runnable poster) {
+        overall(action);
         poster.run();
         return this;
     }
 
-    public BooleanCatheter insert(final TriFunction<Integer, Boolean, Boolean, Boolean> maker) {
-        final Map<Integer, Pair<Integer, Boolean>> indexes = new HashMap<>();
-        final Receptacle<Boolean> lastItem = new Receptacle<>(null);
+    public BooleanCatheter insert(final IntegerAndBiBooleanPredicate maker) {
+        final Map<Integer, IntegerAndBooleanPair> indexes = new HashMap<>();
+        final BooleanReceptacle lastItem = new BooleanReceptacle(false);
         overall((index, item) -> {
-            Boolean result = maker.apply(index, item, lastItem.get());
-            if (result != null) {
-                indexes.put(index + indexes.size(), new Pair<>(index, result));
-            }
+            indexes.put(
+                    index + indexes.size(), 
+                    new IntegerAndBooleanPair(index, maker.test(index, item, lastItem.get()))
+            );
             lastItem.set(item);
         });
 
         final boolean[] ts = this.targets;
         final boolean[] newDelegate = array(ts.length + indexes.size());
-        final Receptacle<Integer> lastIndex = new Receptacle<>(0);
-        final Receptacle<Integer> lastDest = new Receptacle<>(0);
-        Catheter.of(indexes.keySet())
+        final IntegerReceptacle lastIndex = new IntegerReceptacle(0);
+        final IntegerReceptacle lastDest = new IntegerReceptacle(0);
+        IntCatheter.of(indexes.keySet())
                 .sort()
                 .each(index -> {
-                    if (lastIndex.get().intValue() != index) {
+                    if (lastIndex.get() != index) {
                         final int maxCopyLength = Math.min(
                                 newDelegate.length - lastDest.get() - 1,
                                 index - lastIndex.get()
@@ -159,9 +137,9 @@ public class BooleanCatheter {
                                 maxCopyLength
                         );
                     }
-                    final Pair<Integer, Boolean> item = indexes.get(index);
-                    newDelegate[index] = item.second();
-                    lastIndex.set(item.first());
+                    final IntegerAndBooleanPair item = indexes.get(index);
+                    newDelegate[index] = item.booleanValue();
+                    lastIndex.set(item.intValue());
                     lastDest.set(index + 1);
                 }, () -> {
                     System.arraycopy(
@@ -178,11 +156,10 @@ public class BooleanCatheter {
         return this;
     }
 
-    public BooleanCatheter pluck(final TriFunction<Integer, Boolean, Boolean, Boolean> maker) {
-        final Receptacle<Boolean> lastItem = new Receptacle<>(null);
+    public BooleanCatheter pluck(final IntegerAndBiBooleanPredicate maker) {
+        final BooleanReceptacle lastItem = new BooleanReceptacle(false);
         return overallFilter((index, item) -> {
-            final Boolean pluck = maker.apply(index, item, lastItem.get());
-            if (pluck != null && pluck) {
+            if (maker.test(index, item, lastItem.get())) {
                 return false;
             }
             lastItem.set(item);
@@ -190,7 +167,7 @@ public class BooleanCatheter {
         });
     }
 
-    public BooleanCatheter filter(final Predicate<Boolean> predicate) {
+    public BooleanCatheter filter(final BooleanPredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item));
     }
 
@@ -202,7 +179,7 @@ public class BooleanCatheter {
      * @author 草
      * @since 1.0.0
      */
-    public BooleanCatheter overallFilter(final BiPredicate<Integer, Boolean> predicate) {
+    public BooleanCatheter overallFilter(final IntegerAndBooleanPredicate predicate) {
         // 创建需要的变量和常量
         final boolean[] ts = this.targets;
         final int length = ts.length;
@@ -211,16 +188,14 @@ public class BooleanCatheter {
         int index = 0;
 
         // 遍历所有元素
-        while (index < length) {
-            boolean target = ts[index];
-
+        for (boolean target : ts) {
             // 符合条件的保留
             if (predicate.test(index, target)) {
                 index++;
                 continue;
             }
 
-            // 不符合条件的设为null，后面会去掉
+            // 不符合条件的将删除表设为true，后面会去掉
             // 并且将新数组的容量减一
             deleting[index++] = true;
             newDelegateSize--;
@@ -231,10 +206,10 @@ public class BooleanCatheter {
         int newDelegateIndex = 0;
         index = 0;
 
-        // 遍历所有元素
-        while (index < length) {
+        // 遍历添加所有元素
+        for (boolean isDeleting : deleting) {
             // deleting 值为 true 则为被筛选掉的，忽略
-            if (deleting[index]) {
+            if (isDeleting) {
                 index++;
                 continue;
             }
@@ -251,22 +226,22 @@ public class BooleanCatheter {
         return this;
     }
 
-    public BooleanCatheter overallFilter(final boolean initializer, final TriFunction<Integer, Boolean, Boolean, Boolean> predicate) {
-        return overallFilter((index, item) -> predicate.apply(index, item, initializer));
+    public BooleanCatheter overallFilter(final boolean initializer, final IntegerAndBiBooleanPredicate predicate) {
+        return overallFilter((index, item) -> predicate.test(index, item, initializer));
     }
 
-    public BooleanCatheter filter(final boolean initializer, final BiPredicate<Boolean, Boolean> predicate) {
+    public BooleanCatheter filter(final boolean initializer, final BiBooleanPredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item, initializer));
     }
 
-    public BooleanCatheter orFilter(final boolean succeed, final Predicate<Boolean> predicate) {
+    public BooleanCatheter orFilter(final boolean succeed, final BooleanPredicate predicate) {
         if (succeed) {
             return this;
         }
         return filter(predicate);
     }
 
-    public BooleanCatheter orFilter(final boolean succeed, final boolean initializer, final BiPredicate<Boolean, Boolean> predicate) {
+    public BooleanCatheter orFilter(final boolean succeed, final boolean initializer, final BiBooleanPredicate predicate) {
         if (succeed) {
             return this;
         }
@@ -372,7 +347,7 @@ public class BooleanCatheter {
         return this;
     }
 
-    public BooleanCatheter holdTill(final Predicate<Boolean> predicate) {
+    public BooleanCatheter holdTill(final BooleanPredicate predicate) {
         final int index = findTill(predicate);
 
         final boolean[] ts = this.targets;
@@ -391,23 +366,21 @@ public class BooleanCatheter {
         return this;
     }
 
-    public BooleanCatheter whenFlock(final Boolean source, final BiFunction<Boolean, Boolean, Boolean> maker, Consumer<Boolean> consumer) {
+    public BooleanCatheter whenFlock(final boolean source, final BiBooleanPredicate maker, BooleanConsumer consumer) {
         consumer.accept(flock(source, maker));
         return this;
     }
 
-    public BooleanCatheter whenFlock(BiFunction<Boolean, Boolean, Boolean> maker, Consumer<Boolean> consumer) {
+    public BooleanCatheter whenFlock(BiBooleanPredicate maker, BooleanConsumer consumer) {
         consumer.accept(flock(maker));
         return this;
     }
 
     public <X> X alternate(final X source, final BiFunction<X, Boolean, X> maker) {
-        X result = source;
         final boolean[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            result = maker.apply(result, ts[index++]);
+        X result = source;
+        for (boolean b : ts) {
+            result = maker.apply(result, b);
         }
         return result;
     }
@@ -422,23 +395,21 @@ public class BooleanCatheter {
         return this;
     }
 
-    public boolean flock(final boolean source, final BiFunction<Boolean, Boolean, Boolean> maker) {
-        boolean result = source;
+    public boolean flock(final boolean source, final BiBooleanPredicate maker) {
         final boolean[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            result = maker.apply(result, ts[index++]);
+        boolean result = source;
+        for (boolean b : ts) {
+            result = maker.test(result, b);
         }
         return result;
     }
 
-    public boolean flock(final BiFunction<Boolean, Boolean, Boolean> maker) {
+    public boolean flock(final BiBooleanPredicate maker) {
         final boolean[] ts = this.targets;
         final int length = ts.length;
         boolean result = length > 0 && ts[0];
         for (int i = 1; i < length; i++) {
-            result = maker.apply(result, ts[i]);
+            result = maker.test(result, ts[i]);
         }
         return result;
     }
@@ -463,7 +434,7 @@ public class BooleanCatheter {
         return this;
     }
 
-    public BooleanCatheter waiveTill(final Predicate<Boolean> predicate) {
+    public BooleanCatheter waiveTill(final BooleanPredicate predicate) {
         final int index = findTill(predicate);
 
         final boolean[] ts = this.targets;
@@ -485,12 +456,10 @@ public class BooleanCatheter {
         return this;
     }
 
-    public BooleanCatheter till(final Predicate<Boolean> predicate) {
+    public BooleanCatheter till(final BooleanPredicate predicate) {
         final boolean[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
+        for (boolean b : ts) {
+            if (predicate.test(b)) {
                 break;
             }
         }
@@ -498,78 +467,113 @@ public class BooleanCatheter {
         return this;
     }
 
-    public int findTill(final Predicate<Boolean> predicate) {
+    public int findTill(final BooleanPredicate predicate) {
         final boolean[] ts = this.targets;
-        int index = 0, length = ts.length;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
+        int index = 0;
+        for (boolean b : ts) {
+            if (predicate.test(b)) {
                 break;
             }
+            index++;
         }
 
         return index;
     }
 
-    public BooleanCatheter replace(final Function<Boolean, Boolean> handler) {
+    public BooleanCatheter replace(final BooleanPredicate handler) {
         final boolean[] ts = this.targets;
-        final int length = ts.length;
         int index = 0;
-        while (index < length) {
-            ts[index] = handler.apply(ts[index++]);
+        for (boolean b : ts) {
+            ts[index++] = handler.test(b);
         }
         return this;
     }
 
-    public <X> Catheter<X> vary(final Function<Boolean, X> handler) {
+    public BooleanCatheter vary(final BooleanPredicate handler) {
+        return replace(handler);
+    }
+
+    public DoubleCatheter vary(final BooleanToDoubleFunction handler) {
+        final boolean[] ts = this.targets;
+        final double[] array = new double[ts.length];
+        int index = 0;
+        for (boolean i : ts) {
+            array[index++] = handler.applyAsDouble(i);
+        }
+        return DoubleCatheter.of(array);
+    }
+
+    public ByteCatheter vary(final BooleanToByteFunction handler) {
+        final boolean[] ts = this.targets;
+        final byte[] array = new byte[ts.length];
+        int index = 0;
+        for (boolean i : ts) {
+            array[index++] = handler.applyAsByte(i);
+        }
+        return ByteCatheter.of(array);
+    }
+
+    public LongCatheter vary(final BooleanToLongFunction handler) {
+        final boolean[] ts = this.targets;
+        final long[] array = new long[ts.length];
+        int index = 0;
+        for (boolean i : ts) {
+            array[index++] = handler.applyAsLong(i);
+        }
+        return LongCatheter.of(array);
+    }
+
+    public IntCatheter vary(final BooleanToIntegerFunction handler) {
+        final boolean[] ts = this.targets;
+        final int[] array = new int[ts.length];
+        int index = 0;
+        for (boolean i : ts) {
+            array[index++] = handler.applyAsInteger(i);
+        }
+        return IntCatheter.of(array);
+    }
+
+    public <X> Catheter<X> vary(final BooleanFunction<X> handler) {
         final boolean[] ts = this.targets;
         final X[] array = xArray(ts.length);
-        final int length = ts.length;
         int index = 0;
-        while (index < length) {
-            array[index] = handler.apply(ts[index++]);
+        for (boolean b : ts) {
+            array[index++] = handler.apply(b);
         }
         return new Catheter<>(array);
     }
 
-    public BooleanCatheter whenAny(final Predicate<Boolean> predicate, final Consumer<Boolean> action) {
+    public BooleanCatheter whenAny(final BooleanPredicate predicate, final BooleanConsumer action) {
         final boolean[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final boolean t = ts[index++];
-            if (predicate.test(t)) {
-                action.accept(t);
+        for (boolean b : ts) {
+            if (predicate.test(b)) {
+                action.accept(b);
                 break;
             }
         }
         return this;
     }
 
-    public BooleanCatheter whenAll(final Predicate<Boolean> predicate, final Runnable action) {
+    public BooleanCatheter whenAll(final BooleanPredicate predicate, final Runnable action) {
         final boolean[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final boolean t = ts[index++];
-            if (!predicate.test(t)) {
-                return this;
+        for (boolean b : ts) {
+            if (predicate.test(b)) {
+                continue;
             }
+            return this;
         }
         action.run();
         return this;
     }
 
-    public BooleanCatheter whenAll(final Predicate<Boolean> predicate, final Consumer<Boolean> action) {
+    public BooleanCatheter whenAll(final BooleanPredicate predicate, final BooleanConsumer action) {
         return whenAll(predicate, () -> each(action));
     }
 
-    private BooleanCatheter whenNone(final Predicate<Boolean> predicate, final Runnable action) {
+    private BooleanCatheter whenNone(final BooleanPredicate predicate, final Runnable action) {
         final boolean[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final boolean t = ts[index++];
-            if (predicate.test(t)) {
+        for (boolean b : ts) {
+            if (predicate.test(b)) {
                 return this;
             }
         }
@@ -577,56 +581,48 @@ public class BooleanCatheter {
         return this;
     }
 
-    public boolean hasAny(final Predicate<Boolean> predicate) {
+    public boolean hasAny(final BooleanPredicate predicate) {
         final boolean[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
+        for (boolean b : ts) {
+            if (predicate.test(b)) {
                 return true;
             }
         }
         return false;
     }
 
-    public boolean hasAll(final Predicate<Boolean> predicate) {
+    public boolean hasAll(final BooleanPredicate predicate) {
         final boolean[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (!predicate.test(ts[index++])) {
+        for (boolean b : ts) {
+            if (predicate.test(b)) {
+                continue;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    public boolean hasNone(final BooleanPredicate predicate) {
+        final boolean[] ts = this.targets;
+        for (boolean b : ts) {
+            if (predicate.test(b)) {
                 return false;
             }
         }
         return true;
     }
 
-    public boolean hasNone(final Predicate<Boolean> predicate) {
+    public boolean findFirst(final BooleanPredicate predicate) {
         final boolean[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public boolean findFirst(final Predicate<Boolean> predicate) {
-        final boolean[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final boolean t = ts[index++];
-            if (predicate.test(t)) {
-                return t;
+        for (boolean b : ts) {
+            if (predicate.test(b)) {
+                return b;
             }
         }
         return false;
     }
 
-    public boolean findLast(final Predicate<Boolean> predicate) {
+    public boolean findLast(final BooleanPredicate predicate) {
         final boolean[] ts = this.targets;
         int index = ts.length - 1;
         while (index > -1) {
@@ -638,20 +634,19 @@ public class BooleanCatheter {
         return false;
     }
 
-    public <X> X whenFoundFirst(final Predicate<Boolean> predicate, Function<Boolean, X> function) {
+    public <X> X whenFoundFirst(final BooleanPredicate predicate, BooleanFunction<X> function) {
         final boolean[] ts = this.targets;
         final int length = ts.length;
         int index = 0;
-        while (index < length) {
-            final boolean t = ts[index++];
-            if (predicate.test(t)) {
-                return function.apply(t);
+        for (boolean b : ts) {
+            if (predicate.test(b)) {
+                return function.apply(b);
             }
         }
         return null;
     }
 
-    public <X> X whenFoundLast(final Predicate<Boolean> predicate, Function<Boolean, X> function) {
+    public <X> X whenFoundLast(final BooleanPredicate predicate, BooleanFunction<X> function) {
         final boolean[] ts = this.targets;
         int index = ts.length - 1;
         while (index > -1) {
@@ -664,7 +659,7 @@ public class BooleanCatheter {
     }
 
 
-    public BooleanCatheter any(final Consumer<Boolean> consumer) {
+    public BooleanCatheter any(final BooleanConsumer consumer) {
         if (this.targets.length > 0) {
             boolean[] ls = this.targets;
             int index = RANDOM.nextInt(ls.length);
@@ -673,14 +668,14 @@ public class BooleanCatheter {
         return this;
     }
 
-    public BooleanCatheter first(final Consumer<Boolean> consumer) {
+    public BooleanCatheter first(final BooleanConsumer consumer) {
         if (this.targets.length > 0) {
             consumer.accept(this.targets[0]);
         }
         return this;
     }
 
-    public BooleanCatheter tail(final Consumer<Boolean> consumer) {
+    public BooleanCatheter tail(final BooleanConsumer consumer) {
         if (this.targets.length > 0) {
             consumer.accept(this.targets[this.targets.length - 1]);
         }
@@ -710,18 +705,14 @@ public class BooleanCatheter {
         return flock((result, element) -> comparator.compare(result, element) > 0 ? element : result);
     }
 
-    public BooleanCatheter whenMax(final Comparator<Boolean> comparator, final Consumer<Boolean> action) {
+    public BooleanCatheter whenMax(final Comparator<Boolean> comparator, final BooleanConsumer action) {
         action.accept(flock((result, element) -> comparator.compare(result, element) < 0 ? element : result));
         return this;
     }
 
-    public BooleanCatheter whenMin(final Comparator<Boolean> comparator, final Consumer<Boolean> action) {
+    public BooleanCatheter whenMin(final Comparator<Boolean> comparator, final BooleanConsumer action) {
         action.accept(flock((result, element) -> comparator.compare(result, element) > 0 ? element : result));
         return this;
-    }
-
-    private BooleanCatheter exists() {
-        return filter(Objects::nonNull);
     }
 
     public int count() {
@@ -733,7 +724,7 @@ public class BooleanCatheter {
         return this;
     }
 
-    public BooleanCatheter count(final Receptacle<Integer> target) {
+    public BooleanCatheter count(final IntegerReceptacle target) {
         target.set(count());
         return this;
     }
@@ -743,7 +734,6 @@ public class BooleanCatheter {
         return this;
     }
 
-    @SafeVarargs
     public final BooleanCatheter append(final boolean... objects) {
         final boolean[] ts = this.targets;
         final boolean[] newDelegate = array(ts.length + objects.length);
@@ -794,7 +784,7 @@ public class BooleanCatheter {
 
     public <X> Catheter<X> matrixHomoVary(final int width, BooleanCatheter input, final TriFunction<MatrixPos, Boolean, Boolean, X> action) {
         if (input.count() == count()) {
-            final Receptacle<Integer> index = new Receptacle<>(0);
+            final IntegerReceptacle index = new IntegerReceptacle(0);
             return matrixVary(width, (pos, item) -> {
                 final int indexValue = index.get();
 
@@ -893,8 +883,8 @@ public class BooleanCatheter {
             throw new IllegalArgumentException("The elements does not is a matrix");
         }
 
-        final Receptacle<Integer> w = new Receptacle<>(0);
-        final Receptacle<Integer> h = new Receptacle<>(0);
+        final IntegerReceptacle w = new IntegerReceptacle(0);
+        final IntegerReceptacle h = new IntegerReceptacle(0);
 
         final int matrixEdge = width - 1;
 
@@ -917,12 +907,12 @@ public class BooleanCatheter {
             throw new IllegalArgumentException("The elements does not is a matrix");
         }
 
-        final Receptacle<Integer> w = new Receptacle<>(0);
-        final Receptacle<Integer> h = new Receptacle<>(0);
+        final IntegerReceptacle w = new IntegerReceptacle(0);
+        final IntegerReceptacle h = new IntegerReceptacle(0);
 
         final int matrixEdge = width - 1;
 
-        return vary(item -> {
+        return vary((boolean item) -> {
             final int hValue = h.get();
             final int wValue = w.get();
 
@@ -970,7 +960,7 @@ public class BooleanCatheter {
         return new BooleanCatheter(array());
     }
 
-    public BooleanCatheter flat(Function<Boolean, BooleanCatheter> function) {
+    public BooleanCatheter flat(BooleanFunction<BooleanCatheter> function) {
         Catheter<BooleanCatheter> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -995,7 +985,7 @@ public class BooleanCatheter {
         return this;
     }
 
-    public <X> Catheter<X> flatTo(Function<Boolean, Catheter<X>> function) {
+    public <X> Catheter<X> flatTo(BooleanFunction<Catheter<X>> function) {
         Catheter<Catheter<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -1009,7 +999,7 @@ public class BooleanCatheter {
         return Catheter.flatting(catheter, totalSize);
     }
 
-    public <X> Catheter<X> flatToByCollection(Function<Boolean, Collection<X>> function) {
+    public <X> Catheter<X> flatToByCollection(BooleanFunction<Collection<X>> function) {
         Catheter<Collection<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -1020,7 +1010,7 @@ public class BooleanCatheter {
             totalSize += flatting.size();
         }
 
-        return Catheter.flattingByCollection(catheter, totalSize);
+        return Catheter.flattingCollection(catheter, totalSize);
     }
 
     public BooleanCatheter reset() {

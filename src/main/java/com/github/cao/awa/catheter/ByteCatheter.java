@@ -1,8 +1,11 @@
 package com.github.cao.awa.catheter;
 
+import com.github.cao.awa.catheter.action.*;
 import com.github.cao.awa.catheter.matrix.MatrixFlockPos;
 import com.github.cao.awa.catheter.matrix.MatrixPos;
-import com.github.cao.awa.catheter.pair.Pair;
+import com.github.cao.awa.catheter.pair.IntegerAndBytePair;
+import com.github.cao.awa.catheter.receptacle.ByteReceptacle;
+import com.github.cao.awa.catheter.receptacle.IntegerReceptacle;
 import com.github.cao.awa.catheter.receptacle.Receptacle;
 import com.github.cao.awa.sinuatum.function.consumer.TriConsumer;
 import com.github.cao.awa.sinuatum.function.function.QuinFunction;
@@ -44,44 +47,30 @@ public class ByteCatheter {
         return new ByteCatheter(delegate);
     }
 
-    public ByteCatheter each(final Consumer<Byte> action) {
+    public ByteCatheter each(final ByteConsumer action) {
         final byte[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(ts[index++]);
+        for (byte b : ts) {
+            action.accept(b);
         }
         return this;
     }
 
-    public ByteCatheter each(final Consumer<Byte> action, Runnable poster) {
-        final byte[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(ts[index++]);
-        }
+    public ByteCatheter each(final ByteConsumer action, Runnable poster) {
+        each(action);
         poster.run();
         return this;
     }
 
     public <X> ByteCatheter each(X initializer, final BiConsumer<X, Byte> action) {
         final byte[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, ts[index++]);
+        for (byte b : ts) {
+            action.accept(initializer, b);
         }
         return this;
     }
 
     public <X> ByteCatheter each(X initializer, final BiConsumer<X, Byte> action, Consumer<X> poster) {
-        final byte[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, ts[index++]);
-        }
+        each(initializer, action);
         poster.accept(initializer);
         return this;
     }
@@ -89,64 +78,52 @@ public class ByteCatheter {
     public <X> ByteCatheter overall(X initializer, final TriConsumer<X, Integer, Byte> action) {
         final byte[] ts = this.targets;
         int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, index, ts[index++]);
+        for (byte b : ts) {
+            action.accept(initializer, index++, b);
         }
         return this;
     }
 
     public <X> ByteCatheter overall(X initializer, final TriConsumer<X, Integer, Byte> action, Consumer<X> poster) {
-        final byte[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, index, ts[index++]);
-        }
+        overall(initializer, action);
         poster.accept(initializer);
         return this;
     }
 
-    public ByteCatheter overall(final BiConsumer<Integer, Byte> action) {
+    public ByteCatheter overall(final IntegerAndByteConsumer action) {
         final byte[] ts = this.targets;
         int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(index, ts[index++]);
+        for (byte b : ts) {
+            action.accept(index++, b);
         }
         return this;
     }
 
-    public ByteCatheter overall(final BiConsumer<Integer, Byte> action, Runnable poster) {
-        final byte[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(index, ts[index++]);
-        }
+    public ByteCatheter overall(final IntegerAndByteConsumer action, Runnable poster) {
+        overall(action);
         poster.run();
         return this;
     }
 
-    public ByteCatheter insert(final TriFunction<Integer, Byte, Byte, Byte> maker) {
-        final Map<Integer, Pair<Integer, Byte>> indexes = new HashMap<>();
-        final Receptacle<Byte> lastItem = new Receptacle<>(null);
+    public ByteCatheter insert(final IntegerAndBiByteToByteFunction maker) {
+        final Map<Integer, IntegerAndBytePair> indexes = new HashMap<>();
+        final ByteReceptacle lastItem = ByteReceptacle.of();
         overall((index, item) -> {
-            Byte result = maker.apply(index, item, lastItem.get());
-            if (result != null) {
-                indexes.put(index + indexes.size(), new Pair<>(index, result));
-            }
+            indexes.put(
+                    index + indexes.size(), 
+                    new IntegerAndBytePair(index, maker.apply(index, item, lastItem.get()))
+            );
             lastItem.set(item);
         });
 
         final byte[] ts = this.targets;
         final byte[] newDelegate = array(ts.length + indexes.size());
-        final Receptacle<Integer> lastIndex = new Receptacle<>(0);
-        final Receptacle<Integer> lastDest = new Receptacle<>(0);
-        Catheter.of(indexes.keySet())
+        final IntegerReceptacle lastIndex = new IntegerReceptacle(0);
+        final IntegerReceptacle lastDest = new IntegerReceptacle(0);
+        IntCatheter.of(indexes.keySet())
                 .sort()
                 .each(index -> {
-                    if (lastIndex.get().intValue() != index) {
+                    if (lastIndex.get() != index) {
                         final int maxCopyLength = Math.min(
                                 newDelegate.length - lastDest.get() - 1,
                                 index - lastIndex.get()
@@ -159,9 +136,9 @@ public class ByteCatheter {
                                 maxCopyLength
                         );
                     }
-                    final Pair<Integer, Byte> item = indexes.get(index);
-                    newDelegate[index] = item.second();
-                    lastIndex.set(item.first());
+                    final IntegerAndBytePair item = indexes.get(index);
+                    newDelegate[index] = item.byteValue();
+                    lastIndex.set(item.intValue());
                     lastDest.set(index + 1);
                 }, () -> {
                     System.arraycopy(
@@ -178,11 +155,10 @@ public class ByteCatheter {
         return this;
     }
 
-    public ByteCatheter pluck(final TriFunction<Integer, Byte, Byte, Boolean> maker) {
-        final Receptacle<Byte> lastItem = new Receptacle<>(null);
+    public ByteCatheter pluck(final IntegerAndBiBytePredicate maker) {
+        final ByteReceptacle lastItem = ByteReceptacle.of();
         return overallFilter((index, item) -> {
-            final Boolean pluck = maker.apply(index, item, lastItem.get());
-            if (pluck != null && pluck) {
+            if (maker.test(index, item, lastItem.get())) {
                 return false;
             }
             lastItem.set(item);
@@ -190,7 +166,7 @@ public class ByteCatheter {
         });
     }
 
-    public ByteCatheter filter(final Predicate<Byte> predicate) {
+    public ByteCatheter filter(final BytePredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item));
     }
 
@@ -202,7 +178,7 @@ public class ByteCatheter {
      * @author 草
      * @since 1.0.0
      */
-    public ByteCatheter overallFilter(final BiPredicate<Integer, Byte> predicate) {
+    public ByteCatheter overallFilter(final IntegerAndBytePredicate predicate) {
         // 创建需要的变量和常量
         final byte[] ts = this.targets;
         final int length = ts.length;
@@ -211,9 +187,7 @@ public class ByteCatheter {
         int index = 0;
 
         // 遍历所有元素
-        while (index < length) {
-            byte target = ts[index];
-
+        for (byte target : ts) {
             // 符合条件的保留
             if (predicate.test(index, target)) {
                 index++;
@@ -232,9 +206,9 @@ public class ByteCatheter {
         index = 0;
 
         // 遍历所有元素
-        while (index < length) {
+        for (byte isDeleting : deleting) {
             // deleting 值为1则为被筛选掉的，忽略
-            if (deleting[index] == 1) {
+            if (isDeleting == 1) {
                 index++;
                 continue;
             }
@@ -251,22 +225,22 @@ public class ByteCatheter {
         return this;
     }
 
-    public ByteCatheter overallFilter(final byte initializer, final TriFunction<Integer, Byte, Byte, Boolean> predicate) {
-        return overallFilter((index, item) -> predicate.apply(index, item, initializer));
+    public ByteCatheter overallFilter(final byte initializer, final IntegerAndBiBytePredicate predicate) {
+        return overallFilter((index, item) -> predicate.test(index, item, initializer));
     }
 
-    public ByteCatheter filter(final byte initializer, final BiPredicate<Byte, Byte> predicate) {
+    public ByteCatheter filter(final byte initializer, final BiBytePredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item, initializer));
     }
 
-    public ByteCatheter orFilter(final boolean succeed, final Predicate<Byte> predicate) {
+    public ByteCatheter orFilter(final boolean succeed, final BytePredicate predicate) {
         if (succeed) {
             return this;
         }
         return filter(predicate);
     }
 
-    public ByteCatheter orFilter(final boolean succeed, final byte initializer, final BiPredicate<Byte, Byte> predicate) {
+    public ByteCatheter orFilter(final boolean succeed, final byte initializer, final BiBytePredicate predicate) {
         if (succeed) {
             return this;
         }
@@ -376,7 +350,7 @@ public class ByteCatheter {
         return this;
     }
 
-    public ByteCatheter holdTill(final Predicate<Byte> predicate) {
+    public ByteCatheter holdTill(final BytePredicate predicate) {
         final int index = findTill(predicate);
 
         final byte[] ts = this.targets;
@@ -395,12 +369,12 @@ public class ByteCatheter {
         return this;
     }
 
-    public ByteCatheter whenFlock(final Byte source, final BiFunction<Byte, Byte, Byte> maker, Consumer<Byte> consumer) {
+    public ByteCatheter whenFlock(final byte source, final BiByteToByteFunction maker, ByteConsumer consumer) {
         consumer.accept(flock(source, maker));
         return this;
     }
 
-    public ByteCatheter whenFlock(BiFunction<Byte, Byte, Byte> maker, Consumer<Byte> consumer) {
+    public ByteCatheter whenFlock(BiByteToByteFunction maker, ByteConsumer consumer) {
         consumer.accept(flock(maker));
         return this;
     }
@@ -408,10 +382,8 @@ public class ByteCatheter {
     public <X> X alternate(final X source, final BiFunction<X, Byte, X> maker) {
         X result = source;
         final byte[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            result = maker.apply(result, ts[index++]);
+        for (byte b : ts) {
+            result = maker.apply(result, b);
         }
         return result;
     }
@@ -426,23 +398,21 @@ public class ByteCatheter {
         return this;
     }
 
-    public byte flock(final byte source, final BiFunction<Byte, Byte, Byte> maker) {
-        byte result = source;
+    public byte flock(final byte source, final BiByteToByteFunction maker) {
         final byte[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            result = maker.apply(result, ts[index++]);
+        byte result = source;
+        for (byte b : ts) {
+            result = maker.applyAsByte(result, b);
         }
         return result;
     }
 
-    public byte flock(final BiFunction<Byte, Byte, Byte> maker) {
+    public byte flock(final BiByteToByteFunction maker) {
         final byte[] ts = this.targets;
         final int length = ts.length;
         byte result = length > 0 ? ts[0] : 0;
         for (int i = 1; i < length; i++) {
-            result = maker.apply(result, ts[i]);
+            result = maker.applyAsByte(result, ts[i]);
         }
         return result;
     }
@@ -467,7 +437,7 @@ public class ByteCatheter {
         return this;
     }
 
-    public ByteCatheter waiveTill(final Predicate<Byte> predicate) {
+    public ByteCatheter waiveTill(final BytePredicate predicate) {
         final int index = findTill(predicate);
 
         final byte[] ts = this.targets;
@@ -489,12 +459,10 @@ public class ByteCatheter {
         return this;
     }
 
-    public ByteCatheter till(final Predicate<Byte> predicate) {
+    public ByteCatheter till(final BytePredicate predicate) {
         final byte[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
+        for (byte b : ts) {
+            if (predicate.test(b)) {
                 break;
             }
         }
@@ -502,78 +470,113 @@ public class ByteCatheter {
         return this;
     }
 
-    public int findTill(final Predicate<Byte> predicate) {
+    public int findTill(final BytePredicate predicate) {
         final byte[] ts = this.targets;
-        int index = 0, length = ts.length;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
+        int index = 0;
+        for (byte b : ts) {
+            if (predicate.test(b)) {
                 break;
             }
+            index++;
         }
 
         return index;
     }
 
-    public ByteCatheter replace(final Function<Byte, Byte> handler) {
+    public ByteCatheter replace(final ByteUnaryOperator handler) {
         final byte[] ts = this.targets;
-        final int length = ts.length;
         int index = 0;
-        while (index < length) {
-            ts[index] = handler.apply(ts[index++]);
+        for (byte b : ts) {
+            ts[index++] = handler.applyAsByte(b);
         }
         return this;
     }
 
-    public <X> Catheter<X> vary(final Function<Byte, X> handler) {
+    public BooleanCatheter vary(final BytePredicate handler) {
         final byte[] ts = this.targets;
-        final X[] array = xArray(ts.length);
-        final int length = ts.length;
+        final boolean[] array = new boolean[ts.length];
         int index = 0;
-        while (index < length) {
-            array[index] = handler.apply(ts[index++]);
+        for (byte i : ts) {
+            array[index++] = handler.test(i);
         }
-        return new Catheter<>(array);
+        return BooleanCatheter.of(array);
     }
 
-    public ByteCatheter whenAny(final Predicate<Byte> predicate, final Consumer<Byte> action) {
+    public DoubleCatheter vary(final ByteToDoubleFunction handler) {
         final byte[] ts = this.targets;
-        final int length = ts.length;
+        final double[] array = new double[ts.length];
         int index = 0;
-        while (index < length) {
-            final byte t = ts[index++];
-            if (predicate.test(t)) {
-                action.accept(t);
+        for (byte i : ts) {
+            array[index++] = handler.applyAsDouble(i);
+        }
+        return DoubleCatheter.of(array);
+    }
+
+    public ByteCatheter vary(final ByteUnaryOperator handler) {
+        return replace(handler);
+    }
+
+    public LongCatheter vary(final ByteToLongFunction handler) {
+        final byte[] ts = this.targets;
+        final long[] array = new long[ts.length];
+        int index = 0;
+        for (byte i : ts) {
+            array[index++] = handler.applyAsLong(i);
+        }
+        return LongCatheter.of(array);
+    }
+
+    public IntCatheter vary(final ByteToIntegerFunction handler) {
+        final byte[] ts = this.targets;
+        final int[] array = new int[ts.length];
+        int index = 0;
+        for (byte i : ts) {
+            array[index++] = handler.applyAsInteger(i);
+        }
+        return IntCatheter.of(array);
+    }
+
+    public <X> Catheter<X> vary(final ByteFunction<X> handler) {
+        final byte[] ts = this.targets;
+        final X[] array = xArray(ts.length);
+        int index = 0;
+        for (byte b : ts) {
+            array[index++] = handler.apply(b);
+        }
+        return Catheter.of(array);
+    }
+
+    public ByteCatheter whenAny(final BytePredicate predicate, final ByteConsumer action) {
+        final byte[] ts = this.targets;
+        for (byte b : ts) {
+            if (predicate.test(b)) {
+                action.accept(b);
                 break;
             }
         }
         return this;
     }
 
-    public ByteCatheter whenAll(final Predicate<Byte> predicate, final Runnable action) {
+    public ByteCatheter whenAll(final BytePredicate predicate, final Runnable action) {
         final byte[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final byte t = ts[index++];
-            if (!predicate.test(t)) {
-                return this;
+        for (byte b : ts) {
+            if (predicate.test(b)) {
+                continue;
             }
+            return this;
         }
         action.run();
         return this;
     }
 
-    public ByteCatheter whenAll(final Predicate<Byte> predicate, final Consumer<Byte> action) {
+    public ByteCatheter whenAll(final BytePredicate predicate, final ByteConsumer action) {
         return whenAll(predicate, () -> each(action));
     }
 
-    private ByteCatheter whenNone(final Predicate<Byte> predicate, final Runnable action) {
+    private ByteCatheter whenNone(final BytePredicate predicate, final Runnable action) {
         final byte[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final byte t = ts[index++];
-            if (predicate.test(t)) {
+        for (byte b : ts) {
+            if (predicate.test(b)) {
                 return this;
             }
         }
@@ -581,56 +584,48 @@ public class ByteCatheter {
         return this;
     }
 
-    public boolean hasAny(final Predicate<Byte> predicate) {
+    public boolean hasAny(final BytePredicate predicate) {
         final byte[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
+        for (byte b : ts) {
+            if (predicate.test(b)) {
                 return true;
             }
         }
         return false;
     }
 
-    public boolean hasAll(final Predicate<Byte> predicate) {
+    public boolean hasAll(final BytePredicate predicate) {
         final byte[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (!predicate.test(ts[index++])) {
+        for (byte b : ts) {
+            if (predicate.test(b)) {
+                continue;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    public boolean hasNone(final BytePredicate predicate) {
+        final byte[] ts = this.targets;
+        for (byte b : ts) {
+            if (predicate.test(b)) {
                 return false;
             }
         }
         return true;
     }
 
-    public boolean hasNone(final Predicate<Byte> predicate) {
+    public byte findFirst(final BytePredicate predicate) {
         final byte[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public byte findFirst(final Predicate<Byte> predicate) {
-        final byte[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final byte t = ts[index++];
-            if (predicate.test(t)) {
-                return t;
+        for (byte b : ts) {
+            if (predicate.test(b)) {
+                return b;
             }
         }
         return 0;
     }
 
-    public byte findLast(final Predicate<Byte> predicate) {
+    public byte findLast(final BytePredicate predicate) {
         final byte[] ts = this.targets;
         int index = ts.length - 1;
         while (index > -1) {
@@ -642,20 +637,19 @@ public class ByteCatheter {
         return 0;
     }
 
-    public <X> X whenFoundFirst(final Predicate<Byte> predicate, Function<Byte, X> function) {
+    public <X> X whenFoundFirst(final BytePredicate predicate, ByteFunction<X> function) {
         final byte[] ts = this.targets;
         final int length = ts.length;
         int index = 0;
-        while (index < length) {
-            final byte t = ts[index++];
-            if (predicate.test(t)) {
-                return function.apply(t);
+        for (byte b : ts) {
+            if (predicate.test(b)) {
+                return function.apply(b);
             }
         }
         return null;
     }
 
-    public <X> X whenFoundLast(final Predicate<Byte> predicate, Function<Byte, X> function) {
+    public <X> X whenFoundLast(final BytePredicate predicate, ByteFunction<X> function) {
         final byte[] ts = this.targets;
         int index = ts.length - 1;
         while (index > -1) {
@@ -667,7 +661,7 @@ public class ByteCatheter {
         return null;
     }
 
-    public ByteCatheter any(final Consumer<Byte> consumer) {
+    public ByteCatheter any(final ByteConsumer consumer) {
         if (this.targets.length > 0) {
             byte[] ls = this.targets;
             int index = RANDOM.nextInt(ls.length);
@@ -676,14 +670,14 @@ public class ByteCatheter {
         return this;
     }
 
-    public ByteCatheter first(final Consumer<Byte> consumer) {
+    public ByteCatheter first(final ByteConsumer consumer) {
         if (this.targets.length > 0) {
             consumer.accept(this.targets[0]);
         }
         return this;
     }
 
-    public ByteCatheter tail(final Consumer<Byte> consumer) {
+    public ByteCatheter tail(final ByteConsumer consumer) {
         if (this.targets.length > 0) {
             consumer.accept(this.targets[this.targets.length - 1]);
         }
@@ -713,18 +707,14 @@ public class ByteCatheter {
         return flock((result, element) -> comparator.compare(result, element) > 0 ? element : result);
     }
 
-    public ByteCatheter whenMax(final Comparator<Byte> comparator, final Consumer<Byte> action) {
+    public ByteCatheter whenMax(final Comparator<Byte> comparator, final ByteConsumer action) {
         action.accept(flock((result, element) -> comparator.compare(result, element) < 0 ? element : result));
         return this;
     }
 
-    public ByteCatheter whenMin(final Comparator<Byte> comparator, final Consumer<Byte> action) {
+    public ByteCatheter whenMin(final Comparator<Byte> comparator, final ByteConsumer action) {
         action.accept(flock((result, element) -> comparator.compare(result, element) > 0 ? element : result));
         return this;
-    }
-
-    private ByteCatheter exists() {
-        return filter(Objects::nonNull);
     }
 
     public int count() {
@@ -736,7 +726,7 @@ public class ByteCatheter {
         return this;
     }
 
-    public ByteCatheter count(final Receptacle<Integer> target) {
+    public ByteCatheter count(final IntegerReceptacle target) {
         target.set(count());
         return this;
     }
@@ -746,7 +736,6 @@ public class ByteCatheter {
         return this;
     }
 
-    @SafeVarargs
     public final ByteCatheter append(final byte... objects) {
         final byte[] ts = this.targets;
         final byte[] newDelegate = array(ts.length + objects.length);
@@ -797,7 +786,7 @@ public class ByteCatheter {
 
     public <X> Catheter<X> matrixHomoVary(final int width, ByteCatheter input, final TriFunction<MatrixPos, Byte, Byte, X> action) {
         if (input.count() == count()) {
-            final Receptacle<Integer> index = new Receptacle<>(0);
+            final IntegerReceptacle index = new IntegerReceptacle(0);
             return matrixVary(width, (pos, item) -> {
                 final int indexValue = index.get();
 
@@ -896,8 +885,8 @@ public class ByteCatheter {
             throw new IllegalArgumentException("The elements does not is a matrix");
         }
 
-        final Receptacle<Integer> w = new Receptacle<>(0);
-        final Receptacle<Integer> h = new Receptacle<>(0);
+        final IntegerReceptacle w = new IntegerReceptacle(0);
+        final IntegerReceptacle h = new IntegerReceptacle(0);
 
         final int matrixEdge = width - 1;
 
@@ -920,12 +909,12 @@ public class ByteCatheter {
             throw new IllegalArgumentException("The elements does not is a matrix");
         }
 
-        final Receptacle<Integer> w = new Receptacle<>(0);
-        final Receptacle<Integer> h = new Receptacle<>(0);
+        final IntegerReceptacle w = new IntegerReceptacle(0);
+        final IntegerReceptacle h = new IntegerReceptacle(0);
 
         final int matrixEdge = width - 1;
 
-        return vary(item -> {
+        return vary((byte item) -> {
             final int hValue = h.get();
             final int wValue = w.get();
 
@@ -973,7 +962,7 @@ public class ByteCatheter {
         return new ByteCatheter(array());
     }
 
-    public ByteCatheter flat(Function<Byte, ByteCatheter> function) {
+    public ByteCatheter flat(ByteFunction<ByteCatheter> function) {
         Catheter<ByteCatheter> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -998,7 +987,7 @@ public class ByteCatheter {
         return this;
     }
 
-    public <X> Catheter<X> flatTo(Function<Byte, Catheter<X>> function) {
+    public <X> Catheter<X> flatTo(ByteFunction<Catheter<X>> function) {
         Catheter<Catheter<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -1012,7 +1001,7 @@ public class ByteCatheter {
         return Catheter.flatting(catheter, totalSize);
     }
 
-    public <X> Catheter<X> flatToByCollection(Function<Byte, Collection<X>> function) {
+    public <X> Catheter<X> flatToByCollection(ByteFunction<Collection<X>> function) {
         Catheter<Collection<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -1023,7 +1012,7 @@ public class ByteCatheter {
             totalSize += flatting.size();
         }
 
-        return Catheter.flattingByCollection(catheter, totalSize);
+        return Catheter.flattingCollection(catheter, totalSize);
     }
 
     public ByteCatheter reset() {

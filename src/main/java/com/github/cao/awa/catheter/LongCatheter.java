@@ -1,9 +1,11 @@
 package com.github.cao.awa.catheter;
 
+import com.github.cao.awa.catheter.action.*;
+import com.github.cao.awa.catheter.pair.IntegerAndLongPair;
 import com.github.cao.awa.catheter.matrix.MatrixFlockPos;
 import com.github.cao.awa.catheter.matrix.MatrixPos;
-import com.github.cao.awa.catheter.pair.Pair;
-import com.github.cao.awa.catheter.receptacle.Receptacle;
+import com.github.cao.awa.catheter.receptacle.IntegerReceptacle;
+import com.github.cao.awa.catheter.receptacle.LongReceptacle;
 import com.github.cao.awa.sinuatum.function.consumer.TriConsumer;
 import com.github.cao.awa.sinuatum.function.function.QuinFunction;
 import com.github.cao.awa.sinuatum.function.function.TriFunction;
@@ -11,6 +13,7 @@ import com.github.cao.awa.sinuatum.function.function.TriFunction;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
+import java.util.stream.LongStream;
 
 public class LongCatheter {
     private static final Random RANDOM = new Random();
@@ -28,7 +31,7 @@ public class LongCatheter {
         return new LongCatheter(array(size));
     }
 
-    public static <X> LongCatheter of(long[] targets) {
+    public static LongCatheter of(long[] targets) {
         return new LongCatheter(targets);
     }
 
@@ -44,44 +47,30 @@ public class LongCatheter {
         return new LongCatheter(delegate);
     }
 
-    public LongCatheter each(final Consumer<Long> action) {
+    public LongCatheter each(final LongConsumer action) {
         final long[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(ts[index++]);
+        for (long l : ts) {
+            action.accept(l);
         }
         return this;
     }
 
-    public LongCatheter each(final Consumer<Long> action, Runnable poster) {
-        final long[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(ts[index++]);
-        }
+    public LongCatheter each(final LongConsumer action, final Runnable poster) {
+        each(action);
         poster.run();
         return this;
     }
 
-    public <X> LongCatheter each(X initializer, final BiConsumer<X, Long> action) {
+    public <X> LongCatheter each(final X initializer, final BiConsumer<X, Long> action) {
         final long[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, ts[index++]);
+        for (long l : ts) {
+            action.accept(initializer, l);
         }
         return this;
     }
 
     public <X> LongCatheter each(X initializer, final BiConsumer<X, Long> action, Consumer<X> poster) {
-        final long[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, ts[index++]);
-        }
+        each(initializer, action);
         poster.accept(initializer);
         return this;
     }
@@ -89,64 +78,52 @@ public class LongCatheter {
     public <X> LongCatheter overall(X initializer, final TriConsumer<X, Integer, Long> action) {
         final long[] ts = this.targets;
         int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, index, ts[index++]);
+        for (long l : ts) {
+            action.accept(initializer, index++, l);
         }
         return this;
     }
 
     public <X> LongCatheter overall(X initializer, final TriConsumer<X, Integer, Long> action, Consumer<X> poster) {
-        final long[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(initializer, index, ts[index++]);
-        }
+        overall(initializer, action);
         poster.accept(initializer);
         return this;
     }
 
-    public LongCatheter overall(final BiConsumer<Integer, Long> action) {
+    public LongCatheter overall(final IntegerAndLongConsumer action) {
         final long[] ts = this.targets;
         int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(index, ts[index++]);
+        for (long l : ts) {
+            action.accept(index++, l);
         }
         return this;
     }
 
-    public LongCatheter overall(final BiConsumer<Integer, Long> action, Runnable poster) {
-        final long[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            action.accept(index, ts[index++]);
-        }
+    public LongCatheter overall(final IntegerAndLongConsumer action, Runnable poster) {
+        overall(action);
         poster.run();
         return this;
     }
 
-    public LongCatheter insert(final TriFunction<Integer, Long, Long, Long> maker) {
-        final Map<Integer, Pair<Integer, Long>> indexes = new HashMap<>();
-        final Receptacle<Long> lastItem = new Receptacle<>(null);
+    public LongCatheter insert(final IntegerAndBiToLongFunction maker) {
+        final Map<Integer, IntegerAndLongPair> indexes = new HashMap<>();
+        final LongReceptacle lastItem = new LongReceptacle(0);
         overall((index, item) -> {
-            Long result = maker.apply(index, item, lastItem.get());
-            if (result != null) {
-                indexes.put(index + indexes.size(), new Pair<>(index, result));
-            }
+            indexes.put(
+                    index + indexes.size(),
+                    new IntegerAndLongPair(index, maker.apply(index, item, lastItem.get()))
+            );
             lastItem.set(item);
         });
 
         final long[] ts = this.targets;
         final long[] newDelegate = array(ts.length + indexes.size());
-        final Receptacle<Integer> lastIndex = new Receptacle<>(0);
-        final Receptacle<Integer> lastDest = new Receptacle<>(0);
-        Catheter.of(indexes.keySet())
+        final IntegerReceptacle lastIndex = new IntegerReceptacle(0);
+        final IntegerReceptacle lastDest = new IntegerReceptacle(0);
+        IntCatheter.of(indexes.keySet())
                 .sort()
                 .each(index -> {
-                    if (lastIndex.get().intValue() != index) {
+                    if (lastIndex.get() != index) {
                         final int maxCopyLength = Math.min(
                                 newDelegate.length - lastDest.get() - 1,
                                 index - lastIndex.get()
@@ -159,9 +136,9 @@ public class LongCatheter {
                                 maxCopyLength
                         );
                     }
-                    final Pair<Integer, Long> item = indexes.get(index);
-                    newDelegate[index] = item.second();
-                    lastIndex.set(item.first());
+                    final IntegerAndLongPair item = indexes.get(index);
+                    newDelegate[index] = item.longValue();
+                    lastIndex.set(item.intValue());
                     lastDest.set(index + 1);
                 }, () -> {
                     System.arraycopy(
@@ -178,11 +155,10 @@ public class LongCatheter {
         return this;
     }
 
-    public LongCatheter pluck(final TriFunction<Integer, Long, Long, Boolean> maker) {
-        final Receptacle<Long> lastItem = new Receptacle<>(null);
+    public LongCatheter pluck(final IntegerAndBiLongPredicate maker) {
+        final LongReceptacle lastItem = new LongReceptacle(0);
         return overallFilter((index, item) -> {
-            final Boolean pluck = maker.apply(index, item, lastItem.get());
-            if (pluck != null && pluck) {
+            if (maker.test(index, item, lastItem.get())) {
                 return false;
             }
             lastItem.set(item);
@@ -190,44 +166,44 @@ public class LongCatheter {
         });
     }
 
-    public LongCatheter discard(final Predicate<Long> predicate) {
+    public LongCatheter discard(final LongPredicate predicate) {
         return overallFilter((index, item) -> !predicate.test(item));
     }
 
-    public LongCatheter discard(final long initializer, final BiPredicate<Long, Long> predicate) {
+    public LongCatheter discard(final long initializer, final BiLongPredicate predicate) {
         return overallFilter((index, item) -> !predicate.test(item, initializer));
     }
 
-    public LongCatheter orDiscard(final boolean succeed, final Predicate<Long> predicate) {
+    public LongCatheter orDiscard(final boolean succeed, final LongPredicate predicate) {
         if (succeed) {
             return this;
         }
         return discard(predicate);
     }
 
-    public LongCatheter orDiscard(final boolean succeed, final long initializer, final BiPredicate<Long, Long> predicate) {
+    public LongCatheter orDiscard(final boolean succeed, final long initializer, final BiLongPredicate predicate) {
         if (succeed) {
             return this;
         }
         return discard(initializer, predicate);
     }
 
-    public LongCatheter filter(final Predicate<Long> predicate) {
+    public LongCatheter filter(final LongPredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item));
     }
 
-    public LongCatheter filter(final long initializer, final BiPredicate<Long, Long> predicate) {
+    public LongCatheter filter(final long initializer, final BiLongPredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item, initializer));
     }
 
-    public LongCatheter orFilter(final boolean succeed, final Predicate<Long> predicate) {
+    public LongCatheter orFilter(final boolean succeed, final LongPredicate predicate) {
         if (succeed) {
             return this;
         }
         return filter(predicate);
     }
 
-    public LongCatheter orFilter(final boolean succeed, final long initializer, final BiPredicate<Long, Long> predicate) {
+    public LongCatheter orFilter(final boolean succeed, final long initializer, final BiLongPredicate predicate) {
         if (succeed) {
             return this;
         }
@@ -242,7 +218,7 @@ public class LongCatheter {
      * @author 草
      * @since 1.0.0
      */
-    public LongCatheter overallFilter(final BiPredicate<Integer, Long> predicate) {
+    public LongCatheter overallFilter(final IntegerAndLongPredicate predicate) {
         // 创建需要的变量和常量
         final long[] ts = this.targets;
         final int length = ts.length;
@@ -251,9 +227,7 @@ public class LongCatheter {
         int index = 0;
 
         // 遍历所有元素
-        while (index < length) {
-            long target = ts[index];
-
+        for (long target : ts) {
             // 符合条件的保留
             if (predicate.test(index, target)) {
                 index++;
@@ -272,9 +246,9 @@ public class LongCatheter {
         index = 0;
 
         // 遍历所有元素
-        while (index < length) {
+        for (long isDeleting : deleting) {
             // deleting 值为1则为被筛选掉的，忽略
-            if (deleting[index] == 1) {
+            if (isDeleting == 1) {
                 index++;
                 continue;
             }
@@ -291,8 +265,8 @@ public class LongCatheter {
         return this;
     }
 
-    public LongCatheter overallFilter(final long initializer, final TriFunction<Integer, Long, Long, Boolean> predicate) {
-        return overallFilter((index, item) -> predicate.apply(index, item, initializer));
+    public LongCatheter overallFilter(final long initializer, final IntegerAndBiLongPredicate predicate) {
+        return overallFilter((index, item) -> predicate.test(index, item, initializer));
     }
 
     public boolean isPresent() {
@@ -397,7 +371,7 @@ public class LongCatheter {
         return this;
     }
 
-    public LongCatheter holdTill(final Predicate<Long> predicate) {
+    public LongCatheter holdTill(final LongPredicate predicate) {
         final int index = findTill(predicate);
 
         final long[] ts = this.targets;
@@ -416,23 +390,21 @@ public class LongCatheter {
         return this;
     }
 
-    public LongCatheter whenFlock(final Long source, final BiFunction<Long, Long, Long> maker, Consumer<Long> consumer) {
+    public LongCatheter whenFlock(final long source, final BiLongFunction maker, LongConsumer consumer) {
         consumer.accept(flock(source, maker));
         return this;
     }
 
-    public LongCatheter whenFlock(BiFunction<Long, Long, Long> maker, Consumer<Long> consumer) {
+    public LongCatheter whenFlock(BiLongFunction maker, LongConsumer consumer) {
         consumer.accept(flock(maker));
         return this;
     }
 
     public <X> X alternate(final X source, final BiFunction<X, Long, X> maker) {
-        X result = source;
         final long[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            result = maker.apply(result, ts[index++]);
+        X result = source;
+        for (long l : ts) {
+            result = maker.apply(result, l);
         }
         return result;
     }
@@ -447,18 +419,16 @@ public class LongCatheter {
         return this;
     }
 
-    public long flock(final long source, final BiFunction<Long, Long, Long> maker) {
-        long result = source;
+    public long flock(final long source, final BiLongFunction maker) {
         final long[] ts = this.targets;
-        int index = 0;
-        final int length = ts.length;
-        while (index < length) {
-            result = maker.apply(result, ts[index++]);
+        long result = source;
+        for (long l : ts) {
+            result = maker.apply(result, l);
         }
         return result;
     }
 
-    public long flock(final BiFunction<Long, Long, Long> maker) {
+    public long flock(final BiLongFunction maker) {
         final long[] ts = this.targets;
         final int length = ts.length;
         long result = length > 0 ? ts[0] : 0;
@@ -488,7 +458,7 @@ public class LongCatheter {
         return this;
     }
 
-    public LongCatheter waiveTill(final Predicate<Long> predicate) {
+    public LongCatheter waiveTill(final LongPredicate predicate) {
         final int index = findTill(predicate);
 
         final long[] ts = this.targets;
@@ -510,12 +480,10 @@ public class LongCatheter {
         return this;
     }
 
-    public LongCatheter till(final Predicate<Long> predicate) {
+    public LongCatheter till(final LongPredicate predicate) {
         final long[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
+        for (long l : ts) {
+            if (predicate.test(l)) {
                 break;
             }
         }
@@ -523,45 +491,85 @@ public class LongCatheter {
         return this;
     }
 
-    public int findTill(final Predicate<Long> predicate) {
+    public int findTill(final LongPredicate predicate) {
         final long[] ts = this.targets;
-        int index = 0, length = ts.length;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
+        int index = 0;
+        for (long l : ts) {
+            if (predicate.test(l)) {
                 break;
             }
+            index++;
         }
 
         return index;
     }
 
-    public LongCatheter replace(final Function<Long, Long> handler) {
+    public LongCatheter replace(final LongUnaryOperator handler) {
         final long[] ts = this.targets;
-        final int length = ts.length;
         int index = 0;
-        while (index < length) {
-            ts[index] = handler.apply(ts[index++]);
+        for (long t : ts) {
+            ts[index++] = handler.applyAsLong(t);
         }
         return this;
     }
 
-    public <X> Catheter<X> vary(final Function<Long, X> handler) {
+    public BooleanCatheter vary(final LongPredicate handler) {
         final long[] ts = this.targets;
-        final X[] array = xArray(ts.length);
-        final int length = ts.length;
+        final boolean[] array = new boolean[ts.length];
         int index = 0;
-        while (index < length) {
-            array[index] = handler.apply(ts[index++]);
+        for (long t : ts) {
+            array[index++] = handler.test(t);
         }
-        return new Catheter<>(array);
+        return BooleanCatheter.of(array);
     }
 
-    public LongCatheter whenAny(final Predicate<Long> predicate, final Consumer<Long> action) {
+    public ByteCatheter vary(final LongToByteFunction handler) {
         final long[] ts = this.targets;
-        final int length = ts.length;
+        final byte[] array = new byte[ts.length];
         int index = 0;
-        while (index < length) {
-            final long t = ts[index++];
+        for (long t : ts) {
+            array[index++] = handler.applyAsByte(t);
+        }
+        return ByteCatheter.of(array);
+    }
+
+    public DoubleCatheter vary(final LongToDoubleFunction handler) {
+        final long[] ts = this.targets;
+        final double[] array = new double[ts.length];
+        int index = 0;
+        for (long t : ts) {
+            array[index++] = handler.applyAsDouble(t);
+        }
+        return DoubleCatheter.of(array);
+    }
+
+    public IntCatheter vary(final LongToIntFunction handler) {
+        final long[] ts = this.targets;
+        final int[] array = new int[ts.length];
+        int index = 0;
+        for (long t : ts) {
+            array[index++] = handler.applyAsInt(t);
+        }
+        return IntCatheter.of(array);
+    }
+
+    public LongCatheter vary(final LongUnaryOperator handler) {
+        return replace(handler);
+    }
+
+    public <X> Catheter<X> vary(final LongFunction<X> handler) {
+        final long[] ts = this.targets;
+        final X[] array = xArray(ts.length);
+        int index = 0;
+        for (long t : ts) {
+            array[index++] = handler.apply(t);
+        }
+        return Catheter.of(array);
+    }
+
+    public LongCatheter whenAny(final LongPredicate predicate, final LongConsumer action) {
+        final long[] ts = this.targets;
+        for (long t : ts) {
             if (predicate.test(t)) {
                 action.accept(t);
                 break;
@@ -570,31 +578,26 @@ public class LongCatheter {
         return this;
     }
 
-    public LongCatheter whenAll(final Predicate<Long> predicate, final Runnable action) {
+    public LongCatheter whenAll(final LongPredicate predicate, final Runnable action) {
         final long[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final long t = ts[index++];
-            if (!predicate.test(t)) {
-                return this;
+        for (long t : ts) {
+            if (predicate.test(t)) {
+                continue;
             }
+            return this;
         }
         action.run();
         return this;
     }
 
-    public LongCatheter whenAll(final Predicate<Long> predicate, final Consumer<Long> action) {
+    public LongCatheter whenAll(final LongPredicate predicate, final LongConsumer action) {
         return whenAll(predicate, () -> each(action));
     }
 
-    private LongCatheter whenNone(final Predicate<Long> predicate, final Runnable action) {
+    private LongCatheter whenNone(final LongPredicate predicate, final Runnable action) {
         final long[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final long t = ts[index++];
-            if (predicate.test(t)) {
+        for (long l : ts) {
+            if (predicate.test(l)) {
                 return this;
             }
         }
@@ -602,56 +605,48 @@ public class LongCatheter {
         return this;
     }
 
-    public boolean hasAny(final Predicate<Long> predicate) {
+    public boolean hasAny(final LongPredicate predicate) {
         final long[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
+        for (long l : ts) {
+            if (predicate.test(l)) {
                 return true;
             }
         }
         return false;
     }
 
-    public boolean hasAll(final Predicate<Long> predicate) {
+    public boolean hasAll(final LongPredicate predicate) {
         final long[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (!predicate.test(ts[index++])) {
+        for (long l : ts) {
+            if (predicate.test(l)) {
+                continue;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    public boolean hasNone(final LongPredicate predicate) {
+        final long[] ts = this.targets;
+        for (long l : ts) {
+            if (predicate.test(l)) {
                 return false;
             }
         }
         return true;
     }
 
-    public boolean hasNone(final Predicate<Long> predicate) {
+    public long findFirst(final LongPredicate predicate) {
         final long[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            if (predicate.test(ts[index++])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public long findFirst(final Predicate<Long> predicate) {
-        final long[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final long t = ts[index++];
-            if (predicate.test(t)) {
-                return t;
+        for (long l : ts) {
+            if (predicate.test(l)) {
+                return l;
             }
         }
         return 0;
     }
 
-    public long findLast(final Predicate<Long> predicate) {
+    public long findLast(final LongPredicate predicate) {
         final long[] ts = this.targets;
         int index = ts.length - 1;
         while (index > -1) {
@@ -663,20 +658,17 @@ public class LongCatheter {
         return 0;
     }
 
-    public <X> X whenFoundFirst(final Predicate<Long> predicate, Function<Long, X> function) {
+    public <X> X whenFoundFirst(final LongPredicate predicate, LongFunction<X> function) {
         final long[] ts = this.targets;
-        final int length = ts.length;
-        int index = 0;
-        while (index < length) {
-            final long t = ts[index++];
-            if (predicate.test(t)) {
-                return function.apply(t);
+        for (long l : ts) {
+            if (predicate.test(l)) {
+                return function.apply(l);
             }
         }
         return null;
     }
 
-    public <X> X whenFoundLast(final Predicate<Long> predicate, Function<Long, X> function) {
+    public <X> X whenFoundLast(final LongPredicate predicate, LongFunction<X> function) {
         final long[] ts = this.targets;
         int index = ts.length - 1;
         while (index > -1) {
@@ -688,7 +680,7 @@ public class LongCatheter {
         return null;
     }
 
-    public LongCatheter any(final Consumer<Long> consumer) {
+    public LongCatheter any(final LongConsumer consumer) {
         if (this.targets.length > 0) {
             long[] ls = this.targets;
             int index = RANDOM.nextInt(ls.length);
@@ -697,14 +689,14 @@ public class LongCatheter {
         return this;
     }
 
-    public LongCatheter first(final Consumer<Long> consumer) {
+    public LongCatheter first(final LongConsumer consumer) {
         if (this.targets.length > 0) {
             consumer.accept(this.targets[0]);
         }
         return this;
     }
 
-    public LongCatheter tail(final Consumer<Long> consumer) {
+    public LongCatheter tail(final LongConsumer consumer) {
         if (this.targets.length > 0) {
             consumer.accept(this.targets[this.targets.length - 1]);
         }
@@ -734,18 +726,14 @@ public class LongCatheter {
         return flock((result, element) -> comparator.compare(result, element) > 0 ? element : result);
     }
 
-    public LongCatheter whenMax(final Comparator<Long> comparator, final Consumer<Long> action) {
+    public LongCatheter whenMax(final Comparator<Long> comparator, final LongConsumer action) {
         action.accept(flock((result, element) -> comparator.compare(result, element) < 0 ? element : result));
         return this;
     }
 
-    public LongCatheter whenMin(final Comparator<Long> comparator, final Consumer<Long> action) {
+    public LongCatheter whenMin(final Comparator<Long> comparator, final LongConsumer action) {
         action.accept(flock((result, element) -> comparator.compare(result, element) > 0 ? element : result));
         return this;
-    }
-
-    private LongCatheter exists() {
-        return filter(Objects::nonNull);
     }
 
     public int count() {
@@ -757,7 +745,7 @@ public class LongCatheter {
         return this;
     }
 
-    public LongCatheter count(final Receptacle<Integer> target) {
+    public LongCatheter count(final IntegerReceptacle target) {
         target.set(count());
         return this;
     }
@@ -767,7 +755,6 @@ public class LongCatheter {
         return this;
     }
 
-    @SafeVarargs
     public final LongCatheter append(final long... objects) {
         final long[] ts = this.targets;
         final long[] newDelegate = array(ts.length + objects.length);
@@ -818,7 +805,7 @@ public class LongCatheter {
 
     public <X> Catheter<X> matrixHomoVary(final int width, LongCatheter input, final TriFunction<MatrixPos, Long, Long, X> action) {
         if (input.count() == count()) {
-            final Receptacle<Integer> index = new Receptacle<>(0);
+            final IntegerReceptacle index = new IntegerReceptacle(0);
             return matrixVary(width, (pos, item) -> {
                 final int indexValue = index.get();
 
@@ -917,8 +904,8 @@ public class LongCatheter {
             throw new IllegalArgumentException("The elements does not is a matrix");
         }
 
-        final Receptacle<Integer> w = new Receptacle<>(0);
-        final Receptacle<Integer> h = new Receptacle<>(0);
+        final IntegerReceptacle w = new IntegerReceptacle(0);
+        final IntegerReceptacle h = new IntegerReceptacle(0);
 
         final int matrixEdge = width - 1;
 
@@ -941,12 +928,12 @@ public class LongCatheter {
             throw new IllegalArgumentException("The elements does not is a matrix");
         }
 
-        final Receptacle<Integer> w = new Receptacle<>(0);
-        final Receptacle<Integer> h = new Receptacle<>(0);
+        final IntegerReceptacle w = new IntegerReceptacle(0);
+        final IntegerReceptacle h = new IntegerReceptacle(0);
 
         final int matrixEdge = width - 1;
 
-        return vary(item -> {
+        return vary((long item) -> {
             final int hValue = h.get();
             final int wValue = w.get();
 
@@ -994,32 +981,61 @@ public class LongCatheter {
         return new LongCatheter(array());
     }
 
-    public LongCatheter flat(Function<Long, LongCatheter> function) {
-        Catheter<LongCatheter> catheter = Catheter.makeCapacity(count());
+    public LongCatheter flat(LongFunction<LongCatheter> function) {
+        return arrayFlat(generator -> function.apply(generator).targets);
+    }
+
+    public LongCatheter arrayFlat(LongArrayFunction function) {
+        long[][] longs = new long[count()][];
         int totalSize = 0;
 
         int index = 0;
-        for (long element : this.targets) {
-            LongCatheter flatting = function.apply(element);
-            catheter.fetch(index++, flatting);
-            totalSize += flatting.count();
+        long[] targets = this.targets;
+        for (long element : targets) {
+            long[] flatting = function.apply(element);
+            longs[index++] = flatting;
+            totalSize += flatting.length;
         }
 
-        this.targets = array(totalSize);
+        targets = array(totalSize);
         int pos = 0;
-        for (LongCatheter flat : catheter.targets) {
-            System.arraycopy(flat.targets,
-                    0,
-                    this.targets,
-                    pos,
-                    flat.targets.length
-            );
-            pos += flat.targets.length;
+        for (long[] flat : longs) {
+            for (long l : flat) {
+                targets[pos++] = l;
+            }
         }
+
+        this.targets = targets;
+
         return this;
     }
 
-    public <X> Catheter<X> flatTo(Function<Long, Catheter<X>> function) {
+    public LongCatheter streamFlat(LongFunction<LongStream> function) {
+        long[][] longs = new long[count()][];
+        int totalSize = 0;
+
+        int index = 0;
+        long[] targets = this.targets;
+        for (long element : targets) {
+            long[] flatting = function.apply(element).toArray();
+            longs[index++] = flatting;
+            totalSize += flatting.length;
+        }
+
+        targets = array(totalSize);
+        int pos = 0;
+        for (long[] flat : longs) {
+            for (long l : flat) {
+                targets[pos++] = l;
+            }
+        }
+
+        this.targets = targets;
+
+        return this;
+    }
+
+    public <X> Catheter<X> flatTo(LongFunction<Catheter<X>> function) {
         Catheter<Catheter<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -1033,7 +1049,7 @@ public class LongCatheter {
         return Catheter.flatting(catheter, totalSize);
     }
 
-    public <X> Catheter<X> flatToByCollection(Function<Long, Collection<X>> function) {
+    public <X> Catheter<X> collectionFlatTo(LongFunction<Collection<X>> function) {
         Catheter<Collection<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -1044,7 +1060,21 @@ public class LongCatheter {
             totalSize += flatting.size();
         }
 
-        return Catheter.flattingByCollection(catheter, totalSize);
+        return Catheter.flattingCollection(catheter, totalSize);
+    }
+
+    public <X> Catheter<X> arrayFlatTo(LongFunction<X[]> function) {
+        Catheter<X[]> catheter = Catheter.makeCapacity(count());
+        int totalSize = 0;
+
+        int index = 0;
+        for (long element : this.targets) {
+            X[] flatting = function.apply(element);
+            catheter.fetch(index++, flatting);
+            totalSize += flatting.length;
+        }
+
+        return Catheter.flattingArray(catheter, totalSize);
     }
 
     public LongCatheter reset() {
