@@ -216,6 +216,10 @@ public class ByteCatheter {
      * @since 1.0.0
      */
     public ByteCatheter overallFilter(final IntegerAndBytePredicate predicate) {
+        if (isEmpty()) {
+            return this;
+        }
+
         // 创建需要的变量和常量
         final byte[] ts = this.targets;
         final int length = ts.length;
@@ -528,6 +532,10 @@ public class ByteCatheter {
     }
 
     public ByteCatheter replace(final ByteUnaryOperator handler) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final byte[] ts = this.targets;
         int index = 0;
         for (byte b : ts) {
@@ -537,6 +545,10 @@ public class ByteCatheter {
     }
 
     public BooleanCatheter vary(final BytePredicate handler) {
+        if (isEmpty()) {
+            return BooleanCatheter.make();
+        }
+
         final byte[] ts = this.targets;
         final boolean[] array = new boolean[ts.length];
         int index = 0;
@@ -547,6 +559,10 @@ public class ByteCatheter {
     }
 
     public DoubleCatheter vary(final ByteToDoubleFunction handler) {
+        if (isEmpty()) {
+            return DoubleCatheter.make();
+        }
+
         final byte[] ts = this.targets;
         final double[] array = new double[ts.length];
         int index = 0;
@@ -561,6 +577,10 @@ public class ByteCatheter {
     }
 
     public LongCatheter vary(final ByteToLongFunction handler) {
+        if (isEmpty()) {
+            return LongCatheter.make();
+        }
+
         final byte[] ts = this.targets;
         final long[] array = new long[ts.length];
         int index = 0;
@@ -571,6 +591,10 @@ public class ByteCatheter {
     }
 
     public IntCatheter vary(final ByteToIntegerFunction handler) {
+        if (isEmpty()) {
+            return IntCatheter.make();
+        }
+
         final byte[] ts = this.targets;
         final int[] array = new int[ts.length];
         int index = 0;
@@ -581,6 +605,10 @@ public class ByteCatheter {
     }
 
     public <X> Catheter<X> vary(final ByteFunction<X> handler) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         final byte[] ts = this.targets;
         final X[] array = xArray(ts.length);
         int index = 0;
@@ -591,6 +619,10 @@ public class ByteCatheter {
     }
 
     public <X> Catheter<X> vary(final ByteFunction<X> handler, IntFunction<X[]> arrayGenerator) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         final byte[] ts = this.targets;
         final X[] array = arrayGenerator.apply(ts.length);
         int index = 0;
@@ -739,6 +771,10 @@ public class ByteCatheter {
     }
 
     public ByteCatheter reverse() {
+        if (isEmpty()) {
+            return this;
+        }
+
         final byte[] ts = this.targets;
         final int length = ts.length;
         final int split = length / 2;
@@ -1017,6 +1053,10 @@ public class ByteCatheter {
     }
 
     public ByteCatheter flat(ByteFunction<ByteCatheter> function) {
+        if (isEmpty()) {
+            return this;
+        }
+
         Catheter<ByteCatheter> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -1042,6 +1082,10 @@ public class ByteCatheter {
     }
 
     public <X> Catheter<X> flatTo(ByteFunction<Catheter<X>> function) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         Catheter<Catheter<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -1056,6 +1100,10 @@ public class ByteCatheter {
     }
 
     public <X> Catheter<X> flatToByCollection(ByteFunction<Collection<X>> function) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         Catheter<Collection<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 

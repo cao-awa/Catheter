@@ -156,6 +156,10 @@ public class LongCatheter {
     }
 
     public LongCatheter pluck(final IntegerAndBiLongPredicate maker) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final LongReceptacle lastItem = new LongReceptacle(0);
         return overallFilter((index, item) -> {
             if (maker.test(index, item, lastItem.get())) {
@@ -241,6 +245,10 @@ public class LongCatheter {
      * @since 1.0.0
      */
     public LongCatheter overallFilter(final IntegerAndLongPredicate predicate) {
+        if (isEmpty()) {
+            return this;
+        }
+
         // 创建需要的变量和常量
         final long[] ts = this.targets;
         final int length = ts.length;
@@ -527,6 +535,10 @@ public class LongCatheter {
     }
 
     public LongCatheter replace(final LongUnaryOperator handler) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final long[] ts = this.targets;
         int index = 0;
         for (long t : ts) {
@@ -536,6 +548,10 @@ public class LongCatheter {
     }
 
     public BooleanCatheter vary(final LongPredicate handler) {
+        if (isEmpty()) {
+            return BooleanCatheter.make();
+        }
+
         final long[] ts = this.targets;
         final boolean[] array = new boolean[ts.length];
         int index = 0;
@@ -546,6 +562,9 @@ public class LongCatheter {
     }
 
     public ByteCatheter vary(final LongToByteFunction handler) {
+        if (isEmpty()) {
+            return ByteCatheter.make();
+        }
         final long[] ts = this.targets;
         final byte[] array = new byte[ts.length];
         int index = 0;
@@ -556,6 +575,9 @@ public class LongCatheter {
     }
 
     public DoubleCatheter vary(final LongToDoubleFunction handler) {
+        if (isEmpty()) {
+            return DoubleCatheter.make();
+        }
         final long[] ts = this.targets;
         final double[] array = new double[ts.length];
         int index = 0;
@@ -566,6 +588,10 @@ public class LongCatheter {
     }
 
     public IntCatheter vary(final LongToIntFunction handler) {
+        if (isEmpty()) {
+            return IntCatheter.make();
+        }
+
         final long[] ts = this.targets;
         final int[] array = new int[ts.length];
         int index = 0;
@@ -580,6 +606,10 @@ public class LongCatheter {
     }
 
     public <X> Catheter<X> vary(final LongFunction<X> handler) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         final long[] ts = this.targets;
         final X[] array = xArray(ts.length);
         int index = 0;
@@ -590,6 +620,10 @@ public class LongCatheter {
     }
 
     public <X> Catheter<X> vary(final LongFunction<X> handler, IntFunction<X[]> arrayGenerator) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         final long[] ts = this.targets;
         final X[] array = arrayGenerator.apply(ts.length);
         int index = 0;
@@ -736,6 +770,10 @@ public class LongCatheter {
     }
 
     public LongCatheter reverse() {
+        if (isEmpty()) {
+            return this;
+        }
+
         final long[] ts = this.targets;
         final int length = ts.length;
         final int split = length / 2;
@@ -1018,6 +1056,10 @@ public class LongCatheter {
     }
 
     public LongCatheter arrayFlat(LongArrayFunction function) {
+        if (isEmpty()) {
+            return this;
+        }
+
         long[][] longs = new long[count()][];
         int totalSize = 0;
 
@@ -1043,6 +1085,10 @@ public class LongCatheter {
     }
 
     public LongCatheter streamFlat(LongFunction<LongStream> function) {
+        if (isEmpty()) {
+            return this;
+        }
+
         long[][] longs = new long[count()][];
         int totalSize = 0;
 
@@ -1068,6 +1114,10 @@ public class LongCatheter {
     }
 
     public <X> Catheter<X> flatTo(LongFunction<Catheter<X>> function) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         Catheter<Catheter<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -1082,6 +1132,10 @@ public class LongCatheter {
     }
 
     public <X> Catheter<X> collectionFlatTo(LongFunction<Collection<X>> function) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         Catheter<Collection<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -1096,6 +1150,10 @@ public class LongCatheter {
     }
 
     public <X> Catheter<X> arrayFlatTo(LongFunction<X[]> function) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         Catheter<X[]> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 

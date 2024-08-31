@@ -240,6 +240,10 @@ public class IntCatheter {
      * @since 1.0.0
      */
     public IntCatheter overallFilter(final BiIntegerPredicate predicate) {
+        if (isEmpty()) {
+            return this;
+        }
+
         // 创建需要的变量和常量
         final int[] ts = this.targets;
         final int length = ts.length;
@@ -526,6 +530,10 @@ public class IntCatheter {
     }
 
     public IntCatheter replace(final IntUnaryOperator handler) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final int[] ts = this.targets;
         int index = 0;
         for (int i : ts) {
@@ -535,6 +543,10 @@ public class IntCatheter {
     }
 
     public ByteCatheter vary(final IntegerToByteFunction handler) {
+        if (isEmpty()) {
+            return ByteCatheter.make();
+        }
+
         final int[] ts = this.targets;
         final byte[] array = new byte[ts.length];
         int index = 0;
@@ -545,6 +557,10 @@ public class IntCatheter {
     }
 
     public BooleanCatheter vary(final IntPredicate handler) {
+        if (isEmpty()) {
+            return BooleanCatheter.make();
+        }
+
         final int[] ts = this.targets;
         final boolean[] array = new boolean[ts.length];
         int index = 0;
@@ -555,6 +571,10 @@ public class IntCatheter {
     }
 
     public DoubleCatheter vary(final IntToDoubleFunction handler) {
+        if (isEmpty()) {
+            return DoubleCatheter.make();
+        }
+
         final int[] ts = this.targets;
         final double[] array = new double[ts.length];
         int index = 0;
@@ -569,6 +589,10 @@ public class IntCatheter {
     }
 
     public LongCatheter vary(final IntToLongFunction handler) {
+        if (isEmpty()) {
+            return LongCatheter.make();
+        }
+
         final int[] ts = this.targets;
         final long[] array = new long[ts.length];
         int index = 0;
@@ -579,6 +603,10 @@ public class IntCatheter {
     }
 
     public <X> Catheter<X> vary(final IntFunction<X> handler) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         final int[] ts = this.targets;
         final X[] array = xArray(ts.length);
         int index = 0;
@@ -589,6 +617,10 @@ public class IntCatheter {
     }
 
     public <X> Catheter<X> vary(final IntFunction<X> handler, IntFunction<X[]> arrayGenerator) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         final int[] ts = this.targets;
         final X[] array = arrayGenerator.apply(ts.length);
         int index = 0;
@@ -733,6 +765,10 @@ public class IntCatheter {
     }
 
     public IntCatheter reverse() {
+        if (isEmpty()) {
+            return this;
+        }
+
         final int[] ts = this.targets;
         final int length = ts.length;
         final int split = length / 2;
@@ -1011,31 +1047,43 @@ public class IntCatheter {
     }
 
     public IntCatheter flat(IntFunction<IntCatheter> function) {
-        Catheter<IntCatheter> catheter = Catheter.makeCapacity(count());
+        return arrayFlat(generator -> function.apply(generator).targets);
+    }
+
+    public IntCatheter arrayFlat(IntegerArrayFunction function) {
+        if (isEmpty()) {
+            return this;
+        }
+
+        int[][] longs = new int[count()][];
         int totalSize = 0;
 
         int index = 0;
-        for (int element : this.targets) {
-            IntCatheter flatting = function.apply(element);
-            catheter.fetch(index++, flatting);
-            totalSize += flatting.count();
+        int[] targets = this.targets;
+        for (int element : targets) {
+            int[] flatting = function.apply(element);
+            longs[index++] = flatting;
+            totalSize += flatting.length;
         }
 
-        this.targets = array(totalSize);
+        targets = array(totalSize);
         int pos = 0;
-        for (IntCatheter flat : catheter.targets) {
-            System.arraycopy(flat.targets,
-                    0,
-                    this.targets,
-                    pos,
-                    flat.targets.length
-            );
-            pos += flat.targets.length;
+        for (int[] flat : longs) {
+            for (int l : flat) {
+                targets[pos++] = l;
+            }
         }
+
+        this.targets = targets;
+
         return this;
     }
 
     public <X> Catheter<X> flatTo(IntFunction<Catheter<X>> function) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         Catheter<Catheter<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -1050,6 +1098,10 @@ public class IntCatheter {
     }
 
     public <X> Catheter<X> flatToByCollection(IntFunction<Collection<X>> function) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         Catheter<Collection<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 

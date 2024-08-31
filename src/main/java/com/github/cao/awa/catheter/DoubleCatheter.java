@@ -241,6 +241,10 @@ public class DoubleCatheter {
      * @since 1.0.0
      */
     public DoubleCatheter overallFilter(final IntegerAndDoublePredicate predicate) {
+        if (isEmpty()) {
+            return this;
+        }
+
         // 创建需要的变量和常量
         final double[] ts = this.targets;
         final int length = ts.length;
@@ -476,6 +480,10 @@ public class DoubleCatheter {
     }
 
     public DoubleCatheter replace(final DoubleUnaryOperator handler) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final double[] ts = this.targets;
         int index = 0;
         for (double d : ts) {
@@ -489,6 +497,10 @@ public class DoubleCatheter {
     }
 
     public IntCatheter vary(final DoubleToIntFunction handler) {
+        if (isEmpty()) {
+            return IntCatheter.make();
+        }
+
         final double[] ts = this.targets;
         final int[] array = new int[ts.length];
         int index = 0;
@@ -499,6 +511,10 @@ public class DoubleCatheter {
     }
 
     public LongCatheter vary(final DoubleToLongFunction handler) {
+        if (isEmpty()) {
+            return LongCatheter.make();
+        }
+
         final double[] ts = this.targets;
         final long[] array = new long[ts.length];
         int index = 0;
@@ -509,6 +525,10 @@ public class DoubleCatheter {
     }
 
     public BooleanCatheter vary(final DoublePredicate handler) {
+        if (isEmpty()) {
+            return BooleanCatheter.make();
+        }
+
         final double[] ts = this.targets;
         final boolean[] array = new boolean[ts.length];
         int index = 0;
@@ -519,6 +539,10 @@ public class DoubleCatheter {
     }
 
     public ByteCatheter vary(final DoubleToByteFunction handler) {
+        if (isEmpty()) {
+            return ByteCatheter.make();
+        }
+
         final double[] ts = this.targets;
         final byte[] array = new byte[ts.length];
         int index = 0;
@@ -529,6 +553,10 @@ public class DoubleCatheter {
     }
 
     public <X> Catheter<X> vary(final DoubleFunction<X> handler) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         final double[] ts = this.targets;
         final X[] array = xArray(ts.length);
         int index = 0;
@@ -539,6 +567,10 @@ public class DoubleCatheter {
     }
 
     public <X> Catheter<X> vary(final DoubleFunction<X> handler, IntFunction<X[]> arrayGenerator) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         final double[] ts = this.targets;
         final X[] array = arrayGenerator.apply(ts.length);
         int index = 0;
@@ -685,6 +717,10 @@ public class DoubleCatheter {
     }
 
     public DoubleCatheter reverse() {
+        if (isEmpty()) {
+            return this;
+        }
+
         final double[] ts = this.targets;
         final int length = ts.length;
         final int split = length / 2;
@@ -1015,6 +1051,10 @@ public class DoubleCatheter {
     }
 
     public DoubleCatheter flat(DoubleFunction<DoubleCatheter> function) {
+        if (isEmpty()) {
+            return this;
+        }
+
         Catheter<DoubleCatheter> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -1040,6 +1080,10 @@ public class DoubleCatheter {
     }
 
     public <X> Catheter<X> flatTo(DoubleFunction<Catheter<X>> function) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         Catheter<Catheter<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
@@ -1054,6 +1098,10 @@ public class DoubleCatheter {
     }
 
     public <X> Catheter<X> flatToByCollection(DoubleFunction<Collection<X>> function) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
         Catheter<Collection<X>> catheter = Catheter.makeCapacity(count());
         int totalSize = 0;
 
