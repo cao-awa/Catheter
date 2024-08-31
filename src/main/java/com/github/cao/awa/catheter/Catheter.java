@@ -499,6 +499,71 @@ public class Catheter<T> {
         return this;
     }
 
+    public <X, R> Catheter<R> filteringVary(final Predicate<X> predicate, final Function<X, R> handler, Function<? super T, X> converter) {
+        return overallVaryFilter((index, item) -> predicate.test(item), handler, converter);
+    }
+
+    public <X> Catheter<X> filteringVary(final Predicate<? super T> predicate, final Function<T, X> handler) {
+        return overallVaryFilter((index, item) -> predicate.test(item), handler);
+    }
+
+    public <I, X, R> Catheter<R> filteringVary(final I initializer, final BiPredicate<X, I> predicate, Function<X, R> handler) {
+        return overallVaryFilter((index, item) -> predicate.test(item, initializer), handler, null);
+    }
+
+    public <X> Catheter<X> overallVaryFilter(final IntegerAndExtraPredicate<T> predicate, final Function<T, X> handler) {
+        return overallVaryFilter(predicate, handler, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <X, Y> Catheter<X> overallVaryFilter(final IntegerAndExtraPredicate<Y> predicate, final Function<Y, X> handler, Function<? super T, Y> converter) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
+        // 创建需要的变量和常量
+        final T[] ts = this.targets;
+        final Y[] converted = converter == null ? (Y[]) this.targets : xArray(count());
+        if (converter == null) {
+            converter = x -> (Y) x;
+        }
+        int newDelegateSize = ts.length;
+        int index = 0;
+
+        // 遍历所有元素
+        for (T target : ts) {
+            // 符合条件的保留
+            Y convertedTarget = converter.apply(target);
+            if (predicate.test(index, convertedTarget)) {
+                converted[index] = convertedTarget;
+                index++;
+                continue;
+            }
+
+            // 不符合条件的设为null，后面会去掉
+            // 并且将新数组的容量减一
+            ts[index++] = null;
+            newDelegateSize--;
+        }
+
+        // 创建新数组
+        final X[] newDelegate = xArray(newDelegateSize);
+        int newDelegateIndex = 0;
+
+        // 遍历所有元素
+        for (Y t : converted) {
+            // 为null则为被筛选掉的，忽略
+            if (t == null) {
+                continue;
+            }
+
+            // 不为null则加入新数组
+            newDelegate[newDelegateIndex++] = handler.apply(t);
+        }
+
+        return Catheter.make(newDelegate);
+    }
+
     /**
      * Holding items that matched given predicate.
      *
@@ -1448,9 +1513,18 @@ public class Catheter<T> {
     }
 
     public static void main(String[] args) {
-        test();
-        test();
-        test();
+        test2();
+    }
+
+    public static void test2() {
+        Catheter<Long> strings = Catheter.make(
+                1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L
+        );
+
+        strings.filteringVary((number) -> number > 3, String::valueOf)
+                .each(str -> {
+                    System.out.println(str + "!");
+                });
     }
 
     public static void test() {
@@ -1468,14 +1542,14 @@ public class Catheter<T> {
 
         LongCatheter c1 = strings
                 .arrayFlat(l -> {
-            long[] sp = new long[8];
+                    long[] sp = new long[8];
 //            for (int i = 0; i < sp.length; i++) {
 //                sp[i] = (int) (l / (i + 1));
 //            }
-            Arrays.fill(sp, 1);
-            return sp;
+                    Arrays.fill(sp, 1);
+                    return sp;
 //            return Catheter.of(sp);
-        })
+                })
                 .replace(i -> (long) Math.sqrt(i * i * i));
 
         System.out.println("Flat done in " + (System.currentTimeMillis() - start) + "ms");
