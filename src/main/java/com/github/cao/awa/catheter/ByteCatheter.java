@@ -546,6 +546,16 @@ public class ByteCatheter {
         return Catheter.of(array);
     }
 
+    public <X> Catheter<X> vary(final ByteFunction<X> handler, IntFunction<X[]> arrayGenerator) {
+        final byte[] ts = this.targets;
+        final X[] array = arrayGenerator.apply(ts.length);
+        int index = 0;
+        for (byte l : ts) {
+            array[index++] = handler.apply(l);
+        }
+        return Catheter.of(array).arrayGenerator(arrayGenerator);
+    }
+
     public ByteCatheter whenAny(final BytePredicate predicate, final ByteConsumer action) {
         final byte[] ts = this.targets;
         for (byte b : ts) {

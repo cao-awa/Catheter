@@ -543,6 +543,16 @@ public class BooleanCatheter {
         return new Catheter<>(array);
     }
 
+    public <X> Catheter<X> vary(final BooleanFunction<X> handler, IntFunction<X[]> arrayGenerator) {
+        final boolean[] ts = this.targets;
+        final X[] array = arrayGenerator.apply(ts.length);
+        int index = 0;
+        for (boolean l : ts) {
+            array[index++] = handler.apply(l);
+        }
+        return Catheter.of(array).arrayGenerator(arrayGenerator);
+    }
+
     public BooleanCatheter whenAny(final BooleanPredicate predicate, final BooleanConsumer action) {
         final boolean[] ts = this.targets;
         for (boolean b : ts) {

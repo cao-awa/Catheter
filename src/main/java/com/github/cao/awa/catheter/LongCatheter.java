@@ -567,6 +567,16 @@ public class LongCatheter {
         return Catheter.of(array);
     }
 
+    public <X> Catheter<X> vary(final LongFunction<X> handler, IntFunction<X[]> arrayGenerator) {
+        final long[] ts = this.targets;
+        final X[] array = arrayGenerator.apply(ts.length);
+        int index = 0;
+        for (long l : ts) {
+            array[index++] = handler.apply(l);
+        }
+        return Catheter.of(array).arrayGenerator(arrayGenerator);
+    }
+
     public LongCatheter whenAny(final LongPredicate predicate, final LongConsumer action) {
         final long[] ts = this.targets;
         for (long t : ts) {

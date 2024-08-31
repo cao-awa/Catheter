@@ -295,7 +295,7 @@ public class Catheter<T> {
         return this;
     }
 
-    public Catheter<T> pluck(final IntegerAndBiExtraPredicate<T> maker) {
+    public Catheter<T> pluck(final IntegerAndBiExtraPredicate<? super T> maker) {
         final Receptacle<T> lastItem = new Receptacle<>(null);
         return overallFilter((index, item) -> {
             if (maker.test(index, item, lastItem.get())) {
@@ -306,7 +306,7 @@ public class Catheter<T> {
         });
     }
 
-    public Catheter<T> discard(final Predicate<T> predicate) {
+    public Catheter<T> discard(final Predicate<? super T> predicate) {
         return overallFilter((index, item) -> !predicate.test(item));
     }
 
@@ -320,7 +320,7 @@ public class Catheter<T> {
      * @author 草二号机
      * @since 1.0.0
      */
-    public <X> Catheter<T> discard(final X initializer, final BiPredicate<T, X> predicate) {
+    public <X> Catheter<T> discard(final X initializer, final BiPredicate<? super T, X> predicate) {
         return overallFilter((index, item) -> !predicate.test(item, initializer));
     }
 
@@ -333,7 +333,7 @@ public class Catheter<T> {
      * @author 草
      * @since 1.0.0
      */
-    public Catheter<T> orDiscard(final boolean succeed, final Predicate<T> predicate) {
+    public Catheter<T> orDiscard(final boolean succeed, final Predicate<? super T> predicate) {
         if (succeed) {
             return this;
         }
@@ -352,14 +352,14 @@ public class Catheter<T> {
      * @author 草二号机
      * @since 1.0.0
      */
-    public <X> Catheter<T> orDiscard(final boolean succeed, final X initializer, final BiPredicate<T, X> predicate) {
+    public <X> Catheter<T> orDiscard(final boolean succeed, final X initializer, final BiPredicate<? super T, X> predicate) {
         if (succeed) {
             return this;
         }
         return discard(initializer, predicate);
     }
 
-    public Catheter<T> filter(final Predicate<T> predicate) {
+    public Catheter<T> filter(final Predicate<? super T> predicate) {
         return overallFilter((index, item) -> predicate.test(item));
     }
 
@@ -373,7 +373,7 @@ public class Catheter<T> {
      * @author 草二号机
      * @since 1.0.0
      */
-    public <X> Catheter<T> filter(final X initializer, final BiPredicate<T, X> predicate) {
+    public <X> Catheter<T> filter(final X initializer, final BiPredicate<? super T, X> predicate) {
         return overallFilter((index, item) -> predicate.test(item, initializer));
     }
 
@@ -385,11 +385,10 @@ public class Catheter<T> {
      * @author 草
      * @since 1.0.0
      */
-    public Catheter<T> overallFilter(final IntegerAndExtraPredicate<T> predicate) {
+    public Catheter<T> overallFilter(final IntegerAndExtraPredicate<? super T> predicate) {
         // 创建需要的变量和常量
         final T[] ts = this.targets;
-        final int length = ts.length;
-        int newDelegateSize = length;
+        int newDelegateSize = ts.length;
         int index = 0;
 
         // 遍历所有元素
@@ -409,7 +408,6 @@ public class Catheter<T> {
         // 创建新数组
         final T[] newDelegate = array(newDelegateSize);
         int newDelegateIndex = 0;
-        index = 0;
 
         // 遍历所有元素
         for (T t : ts) {
@@ -438,7 +436,7 @@ public class Catheter<T> {
      * @author 草二号机
      * @since 1.0.0
      */
-    public <X> Catheter<T> overallFilter(final X initializer, final IntegerAndBiDiffExtraPredicate<T, X> predicate) {
+    public <X> Catheter<T> overallFilter(final X initializer, final IntegerAndBiDiffExtraPredicate<? super T, X> predicate) {
         return overallFilter((index, item) -> predicate.test(index, item, initializer));
     }
 
@@ -451,7 +449,7 @@ public class Catheter<T> {
      * @author 草
      * @since 1.0.0
      */
-    public Catheter<T> orFilter(final boolean succeed, final Predicate<T> predicate) {
+    public Catheter<T> orFilter(final boolean succeed, final Predicate<? super T> predicate) {
         if (succeed) {
             return this;
         }
@@ -470,7 +468,7 @@ public class Catheter<T> {
      * @author 草二号机
      * @since 1.0.0
      */
-    public <X> Catheter<T> orFilter(final boolean succeed, final X initializer, final BiPredicate<T, X> predicate) {
+    public <X> Catheter<T> orFilter(final boolean succeed, final X initializer, final BiPredicate<? super T, X> predicate) {
         if (succeed) {
             return this;
         }
@@ -519,7 +517,7 @@ public class Catheter<T> {
         return this;
     }
 
-    public Catheter<T> holdTill(final Predicate<T> predicate) {
+    public Catheter<T> holdTill(final Predicate<? super T> predicate) {
         final int index = findTill(predicate);
 
         final T[] ts = this.targets;
@@ -609,7 +607,7 @@ public class Catheter<T> {
         return this;
     }
 
-    public Catheter<T> waiveTill(final Predicate<T> predicate) {
+    public Catheter<T> waiveTill(final Predicate<? super T> predicate) {
         final int index = findTill(predicate);
 
         final T[] ts = this.targets;
@@ -631,7 +629,7 @@ public class Catheter<T> {
         return this;
     }
 
-    public Catheter<T> till(final Predicate<T> predicate) {
+    public Catheter<T> till(final Predicate<? super T> predicate) {
         final T[] ts = this.targets;
         for (T t : ts) {
             if (predicate.test(t)) {
@@ -642,7 +640,7 @@ public class Catheter<T> {
         return this;
     }
 
-    public int findTill(final Predicate<T> predicate) {
+    public int findTill(final Predicate<? super T> predicate) {
         final T[] ts = this.targets;
         int index = 0;
         for (T t : ts) {
@@ -704,7 +702,7 @@ public class Catheter<T> {
         return ByteCatheter.of(array);
     }
 
-    public BooleanCatheter vary(final Predicate<T> handler) {
+    public BooleanCatheter vary(final Predicate<? super T> handler) {
         final T[] ts = this.targets;
         final boolean[] array = new boolean[ts.length];
         int index = 0;
@@ -724,7 +722,17 @@ public class Catheter<T> {
         return Catheter.of(array);
     }
 
-    public Catheter<T> whenAny(final Predicate<T> predicate, final Consumer<T> action) {
+    public <X> Catheter<X> vary(final Function<T, X> handler, IntFunction<X[]> arrayGenerator) {
+        final T[] ts = this.targets;
+        final X[] array = arrayGenerator.apply(ts.length);
+        int index = 0;
+        for (T t : ts) {
+            array[index++] = handler.apply(t);
+        }
+        return Catheter.of(array).arrayGenerator(arrayGenerator);
+    }
+
+    public Catheter<T> whenAny(final Predicate<? super T> predicate, final Consumer<T> action) {
         final T[] ts = this.targets;
         for (T t : ts) {
             if (predicate.test(t)) {
@@ -735,7 +743,7 @@ public class Catheter<T> {
         return this;
     }
 
-    public Catheter<T> whenAll(final Predicate<T> predicate, final Runnable action) {
+    public Catheter<T> whenAll(final Predicate<? super T> predicate, final Runnable action) {
         final T[] ts = this.targets;
         for (T t : ts) {
             if (predicate.test(t)) {
@@ -747,11 +755,11 @@ public class Catheter<T> {
         return this;
     }
 
-    public Catheter<T> whenAll(final Predicate<T> predicate, final Consumer<T> action) {
+    public Catheter<T> whenAll(final Predicate<? super T> predicate, final Consumer<T> action) {
         return whenAll(predicate, () -> each(action));
     }
 
-    private Catheter<T> whenNone(final Predicate<T> predicate, final Runnable action) {
+    private Catheter<T> whenNone(final Predicate<? super T> predicate, final Runnable action) {
         final T[] ts = this.targets;
         for (T t : ts) {
             if (predicate.test(t)) {
@@ -762,7 +770,7 @@ public class Catheter<T> {
         return this;
     }
 
-    public boolean hasAny(final Predicate<T> predicate) {
+    public boolean hasAny(final Predicate<? super T> predicate) {
         final T[] ts = this.targets;
         for (T t : ts) {
             if (predicate.test(t)) {
@@ -772,7 +780,7 @@ public class Catheter<T> {
         return false;
     }
 
-    public boolean hasAll(final Predicate<T> predicate) {
+    public boolean hasAll(final Predicate<? super T> predicate) {
         final T[] ts = this.targets;
         for (T t : ts) {
             if (predicate.test(t)) {
@@ -783,7 +791,7 @@ public class Catheter<T> {
         return true;
     }
 
-    public boolean hasNone(final Predicate<T> predicate) {
+    public boolean hasNone(final Predicate<? super T> predicate) {
         final T[] ts = this.targets;
         for (T t : ts) {
             if (predicate.test(t)) {
@@ -793,7 +801,7 @@ public class Catheter<T> {
         return true;
     }
 
-    public T findFirst(final Predicate<T> predicate) {
+    public T findFirst(final Predicate<? super T> predicate) {
         final T[] ts = this.targets;
         for (T t : ts) {
             if (predicate.test(t)) {
@@ -803,7 +811,7 @@ public class Catheter<T> {
         return null;
     }
 
-    public T findLast(final Predicate<T> predicate) {
+    public T findLast(final Predicate<? super T> predicate) {
         final T[] ts = this.targets;
         int index = ts.length - 1;
         while (index > -1) {
@@ -815,7 +823,7 @@ public class Catheter<T> {
         return null;
     }
 
-    public <X> X whenFoundFirst(final Predicate<T> predicate, Function<T, X> function) {
+    public <X> X whenFoundFirst(final Predicate<? super T> predicate, Function<T, X> function) {
         final T[] ts = this.targets;
         for (T t : ts) {
             if (predicate.test(t)) {
@@ -825,7 +833,7 @@ public class Catheter<T> {
         return null;
     }
 
-    public <X> X whenFoundLast(final Predicate<T> predicate, Function<T, X> function) {
+    public <X> X whenFoundLast(final Predicate<? super T> predicate, Function<T, X> function) {
         final T[] ts = this.targets;
         int index = ts.length - 1;
         while (index > -1) {
@@ -1303,7 +1311,7 @@ public class Catheter<T> {
 
         LongCatheter c1 = strings
                 .arrayFlat(l -> {
-            long[] sp = new long[16];
+            long[] sp = new long[8];
 //            for (int i = 0; i < sp.length; i++) {
 //                sp[i] = (int) (l / (i + 1));
 //            }
@@ -1311,9 +1319,6 @@ public class Catheter<T> {
             return sp;
 //            return Catheter.of(sp);
         })
-                .replace(i -> (long) Math.sqrt(i * i * i))
-                .vary((long i) -> Math.sqrt(i * i * i) )
-                .vary((double i) -> (long) Math.sqrt(i * i * i))
                 .replace(i -> (long) Math.sqrt(i * i * i));
 
         System.out.println("Flat done in " + (System.currentTimeMillis() - start) + "ms");
@@ -1336,16 +1341,13 @@ public class Catheter<T> {
 
         LongStream s1 = s
                 .flatMap(l -> {
-                    long[] sp = new long[16];
+                    long[] sp = new long[8];
 //            for (int i = 0; i < sp.length; i++) {
 //                sp[i] = (int) (l / (i + 1));
 //            }
                     Arrays.fill(sp, 1);
                     return Arrays.stream(sp);
                 })
-                .map(i -> (long) Math.sqrt(i * i * i))
-                .mapToDouble(i -> Math.sqrt(i * i * i))
-                .mapToLong(i -> (long) Math.sqrt(i * i * i))
                 .map(i -> (long) Math.sqrt(i * i * i));
 
         System.out.println("Flat done in " + (System.currentTimeMillis() - start) + "ms");

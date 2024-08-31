@@ -516,6 +516,16 @@ public class DoubleCatheter {
         return new Catheter<>(array);
     }
 
+    public <X> Catheter<X> vary(final DoubleFunction<X> handler, IntFunction<X[]> arrayGenerator) {
+        final double[] ts = this.targets;
+        final X[] array = arrayGenerator.apply(ts.length);
+        int index = 0;
+        for (double d : ts) {
+            array[index++] = handler.apply(d);
+        }
+        return Catheter.of(array).arrayGenerator(arrayGenerator);
+    }
+
     public DoubleCatheter whenAny(final DoublePredicate predicate, final DoubleConsumer action) {
         final double[] ts = this.targets;
         for (double d : ts) {

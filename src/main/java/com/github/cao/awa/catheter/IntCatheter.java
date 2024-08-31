@@ -566,6 +566,16 @@ public class IntCatheter {
         return Catheter.of(array);
     }
 
+    public <X> Catheter<X> vary(final IntFunction<X> handler, IntFunction<X[]> arrayGenerator) {
+        final int[] ts = this.targets;
+        final X[] array = arrayGenerator.apply(ts.length);
+        int index = 0;
+        for (int i : ts) {
+            array[index++] = handler.apply(i);
+        }
+        return Catheter.of(array).arrayGenerator(arrayGenerator);
+    }
+
     public IntCatheter whenAny(final IntPredicate predicate, final IntConsumer action) {
         final int[] ts = this.targets;
         for (int i : ts) {
