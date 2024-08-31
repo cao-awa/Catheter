@@ -1607,6 +1607,15 @@ public class Catheter<T> {
         return this;
     }
 
+    public T[] safeArray() {
+        T[] array = array(count());
+        int index = 0;
+        for (T target : this.targets) {
+            array[index++] = target;
+        }
+        return array;
+    }
+
     public T[] array() {
         return this.targets.clone();
     }
