@@ -199,6 +199,30 @@ public class ByteCatheter {
         return discard(initializer, predicate);
     }
 
+    public ByteCatheter filterTo(final BytePredicate predicate) {
+        return dump().filter(predicate);
+    }
+
+    public <X> ByteCatheter filterTo(final Predicate<X> predicate, ByteFunction<X> converter) {
+        return dump().filter(predicate, converter);
+    }
+
+    public ByteCatheter filterTo(final byte initializer, final BiBytePredicate predicate) {
+        return dump().filter(initializer, predicate);
+    }
+
+    public ByteCatheter orFilterTo(final boolean succeed, final BytePredicate predicate) {
+        return dump().orFilter(succeed, predicate);
+    }
+
+    public <X> ByteCatheter orFilterTo(final boolean succeed, final Predicate<X> predicate, ByteFunction<X> converter) {
+        return dump().orFilter(succeed, predicate, converter);
+    }
+
+    public ByteCatheter orFilterTo(final boolean succeed, final byte initializer, final BiBytePredicate predicate) {
+        return dump().orFilter(succeed, initializer, predicate);
+    }
+
     public ByteCatheter filter(final BytePredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item));
     }
@@ -380,6 +404,10 @@ public class ByteCatheter {
     }
 
     public ByteCatheter holdTill(int index) {
+        if (isEmpty()) {
+            return this;
+        }
+
         index = Math.min(index, this.targets.length);
 
         final byte[] ts = this.targets;
@@ -399,6 +427,10 @@ public class ByteCatheter {
     }
 
     public ByteCatheter holdTill(final BytePredicate predicate) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final int index = findTill(predicate);
 
         final byte[] ts = this.targets;
@@ -466,6 +498,10 @@ public class ByteCatheter {
     }
 
     public ByteCatheter waiveTill(final int index) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final byte[] ts = this.targets;
         final byte[] newDelegate;
         if (index >= ts.length) {
@@ -486,6 +522,10 @@ public class ByteCatheter {
     }
 
     public ByteCatheter waiveTill(final BytePredicate predicate) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final int index = findTill(predicate);
 
         final byte[] ts = this.targets;

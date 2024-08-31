@@ -412,6 +412,18 @@ public class Catheter<T> {
         return discard(initializer, predicate);
     }
 
+    public <X> Catheter<T> filterTo(final Predicate<X> predicate, Function<? super T, X> converter) {
+        return dump().filter(predicate, converter);
+    }
+
+    public Catheter<T> filterTo(final Predicate<? super T> predicate) {
+        return dump().filter(predicate);
+    }
+
+    public <X> Catheter<T> filterTo(final X initializer, final BiPredicate<? super T, X> predicate) {
+        return dump().filter(initializer, predicate);
+    }
+
     public <X> Catheter<T> filter(final Predicate<X> predicate, Function<? super T, X> converter) {
         return overallFilter((index, item) -> predicate.test(converter.apply(item)));
     }
@@ -501,6 +513,18 @@ public class Catheter<T> {
         return overallFilter((index, item) -> predicate.test(index, item, initializer));
     }
 
+    public Catheter<T> orFilterTo(final boolean succeed, final Predicate<? super T> predicate) {
+        return dump().orFilter(succeed, predicate);
+    }
+
+    public <X> Catheter<T> orFilterTo(final boolean succeed, final Predicate<X> predicate, Function<? super T, X> converter) {
+        return dump().orFilter(succeed, predicate, converter);
+    }
+
+    public <X> Catheter<T> orFilterTo(final boolean succeed, final X initializer, final BiPredicate<? super T, X> predicate) {
+        return dump().orFilter(succeed, initializer, predicate);
+    }
+
     /**
      * Holding items that matched given predicate.
      *
@@ -553,6 +577,10 @@ public class Catheter<T> {
     }
 
     public Catheter<T> distinct() {
+        if (isEmpty()) {
+            return this;
+        }
+
         final Map<T, Boolean> map = new HashMap<>();
         return filter(
                 item -> {
@@ -576,6 +604,10 @@ public class Catheter<T> {
     }
 
     public Catheter<T> holdTill(int index) {
+        if (isEmpty()) {
+            return this;
+        }
+
         index = Math.min(index, this.targets.length);
 
         final T[] ts = this.targets;
@@ -595,6 +627,10 @@ public class Catheter<T> {
     }
 
     public Catheter<T> holdTill(final Predicate<? super T> predicate) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final int index = findTill(predicate);
 
         final T[] ts = this.targets;
@@ -665,6 +701,10 @@ public class Catheter<T> {
     }
 
     public Catheter<T> waiveTill(final int index) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final T[] ts = this.targets;
         final T[] newDelegate;
         if (index >= ts.length) {
@@ -685,6 +725,10 @@ public class Catheter<T> {
     }
 
     public Catheter<T> waiveTill(final Predicate<? super T> predicate) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final int index = findTill(predicate);
 
         final T[] ts = this.targets;

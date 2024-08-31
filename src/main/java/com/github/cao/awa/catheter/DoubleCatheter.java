@@ -199,6 +199,30 @@ public class DoubleCatheter {
         return discard(initializer, predicate);
     }
 
+    public DoubleCatheter filterTo(final DoublePredicate predicate) {
+        return dump().filter(predicate);
+    }
+
+    public <X> DoubleCatheter filterTo(final Predicate<X> predicate, DoubleFunction<X> converter) {
+        return dump().filter(predicate, converter);
+    }
+
+    public DoubleCatheter filterTo(final double initializer, final BiDoublePredicate predicate) {
+        return dump().filter(initializer, predicate);
+    }
+
+    public DoubleCatheter orFilterTo(final boolean succeed, final DoublePredicate predicate) {
+        return dump().orFilter(succeed, predicate);
+    }
+
+    public <X> DoubleCatheter orFilterTo(final boolean succeed, final Predicate<X> predicate, DoubleFunction<X> converter) {
+        return dump().orFilter(succeed, predicate, converter);
+    }
+
+    public DoubleCatheter orFilterTo(final boolean succeed, final double initializer, final BiDoublePredicate predicate) {
+        return dump().orFilter(succeed, initializer, predicate);
+    }
+
     public DoubleCatheter filter(final DoublePredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item));
     }
@@ -329,6 +353,10 @@ public class DoubleCatheter {
     }
 
     public DoubleCatheter holdTill(int index) {
+        if (isEmpty()) {
+            return this;
+        }
+
         index = Math.min(index, this.targets.length);
 
         final double[] ts = this.targets;
@@ -348,6 +376,10 @@ public class DoubleCatheter {
     }
 
     public DoubleCatheter holdTill(final DoublePredicate predicate) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final int index = findTill(predicate);
 
         final double[] ts = this.targets;
@@ -415,6 +447,10 @@ public class DoubleCatheter {
     }
 
     public DoubleCatheter waiveTill(final int index) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final double[] ts = this.targets;
         final double[] newDelegate;
         if (index >= ts.length) {
@@ -435,6 +471,10 @@ public class DoubleCatheter {
     }
 
     public DoubleCatheter waiveTill(final DoublePredicate predicate) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final int index = findTill(predicate);
 
         final double[] ts = this.targets;

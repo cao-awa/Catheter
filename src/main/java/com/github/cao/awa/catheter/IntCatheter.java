@@ -198,6 +198,30 @@ public class IntCatheter {
         return discard(initializer, predicate);
     }
 
+    public IntCatheter filterTo(final IntPredicate predicate) {
+        return dump().filter(predicate);
+    }
+
+    public <X> IntCatheter filterTo(final Predicate<X> predicate, IntFunction<X> converter) {
+        return dump().filter(predicate, converter);
+    }
+
+    public IntCatheter filterTo(final int initializer, final BiIntegerPredicate predicate) {
+        return dump().filter(initializer, predicate);
+    }
+
+    public IntCatheter orFilterTo(final boolean succeed, final IntPredicate predicate) {
+        return dump().orFilter(succeed, predicate);
+    }
+
+    public <X> IntCatheter orFilterTo(final boolean succeed, final Predicate<X> predicate, IntFunction<X> converter) {
+        return dump().orFilter(succeed, predicate, converter);
+    }
+
+    public IntCatheter orFilterTo(final boolean succeed, final int initializer, final BiIntegerPredicate predicate) {
+        return dump().orFilter(succeed, initializer, predicate);
+    }
+
     public IntCatheter filter(final IntPredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item));
     }
@@ -378,6 +402,10 @@ public class IntCatheter {
     }
 
     public IntCatheter holdTill(int index) {
+        if (isEmpty()) {
+            return this;
+        }
+
         index = Math.min(index, this.targets.length);
 
         final int[] ts = this.targets;
@@ -397,6 +425,10 @@ public class IntCatheter {
     }
 
     public IntCatheter holdTill(final IntPredicate predicate) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final int index = findTill(predicate);
 
         final int[] ts = this.targets;
@@ -464,6 +496,10 @@ public class IntCatheter {
     }
 
     public IntCatheter waiveTill(final int index) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final int[] ts = this.targets;
         final int[] newDelegate;
         if (index >= ts.length) {
@@ -484,6 +520,10 @@ public class IntCatheter {
     }
 
     public IntCatheter waiveTill(final IntPredicate predicate) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final int index = findTill(predicate);
 
         final int[] ts = this.targets;

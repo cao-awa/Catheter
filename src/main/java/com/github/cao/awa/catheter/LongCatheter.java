@@ -203,6 +203,30 @@ public class LongCatheter {
         return discard(initializer, predicate);
     }
 
+    public LongCatheter filterTo(final LongPredicate predicate) {
+        return dump().filter(predicate);
+    }
+
+    public <X> LongCatheter filterTo(final Predicate<X> predicate, LongFunction<X> converter) {
+        return dump().filter(predicate, converter);
+    }
+
+    public LongCatheter filterTo(final long initializer, final BiLongPredicate predicate) {
+        return dump().filter(initializer, predicate);
+    }
+
+    public LongCatheter orFilterTo(final boolean succeed, final LongPredicate predicate) {
+        return dump().orFilter(succeed, predicate);
+    }
+
+    public <X> LongCatheter orFilterTo(final boolean succeed, final Predicate<X> predicate, LongFunction<X> converter) {
+        return dump().orFilter(succeed, predicate, converter);
+    }
+
+    public LongCatheter orFilterTo(final boolean succeed, final long initializer, final BiLongPredicate predicate) {
+        return dump().orFilter(succeed, initializer, predicate);
+    }
+
     public LongCatheter filter(final LongPredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item));
     }
@@ -351,6 +375,10 @@ public class LongCatheter {
     }
 
     public LongCatheter distinct() {
+        if (isEmpty()) {
+            return this;
+        }
+
         final Map<Long, Boolean> map = new HashMap<>();
         return filter(
                 item -> {
@@ -383,6 +411,10 @@ public class LongCatheter {
     }
 
     public LongCatheter holdTill(int index) {
+        if (isEmpty()) {
+            return this;
+        }
+
         index = Math.min(index, this.targets.length);
 
         final long[] ts = this.targets;
@@ -402,6 +434,10 @@ public class LongCatheter {
     }
 
     public LongCatheter holdTill(final LongPredicate predicate) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final int index = findTill(predicate);
 
         final long[] ts = this.targets;
@@ -469,6 +505,10 @@ public class LongCatheter {
     }
 
     public LongCatheter waiveTill(final int index) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final long[] ts = this.targets;
         final long[] newDelegate;
         if (index >= ts.length) {
@@ -489,6 +529,10 @@ public class LongCatheter {
     }
 
     public LongCatheter waiveTill(final LongPredicate predicate) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final int index = findTill(predicate);
 
         final long[] ts = this.targets;

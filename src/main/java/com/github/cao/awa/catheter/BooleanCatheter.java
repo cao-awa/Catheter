@@ -200,6 +200,30 @@ public class BooleanCatheter {
         return discard(initializer, predicate);
     }
 
+    public BooleanCatheter filterTo(final BooleanPredicate predicate) {
+        return dump().filter(predicate);
+    }
+
+    public <X> BooleanCatheter filterTo(final Predicate<X> predicate, BooleanFunction<X> converter) {
+        return dump().filter(predicate, converter);
+    }
+
+    public BooleanCatheter filterTo(final boolean initializer, final BiBooleanPredicate predicate) {
+        return dump().filter(initializer, predicate);
+    }
+
+    public BooleanCatheter orFilterTo(final boolean succeed, final BooleanPredicate predicate) {
+        return dump().orFilter(succeed, predicate);
+    }
+
+    public <X> BooleanCatheter orFilterTo(final boolean succeed, final Predicate<X> predicate, BooleanFunction<X> converter) {
+        return dump().orFilter(succeed, predicate, converter);
+    }
+
+    public BooleanCatheter orFilterTo(final boolean succeed, final boolean initializer, final BiBooleanPredicate predicate) {
+        return dump().orFilter(succeed, initializer, predicate);
+    }
+
     public BooleanCatheter filter(final BooleanPredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item));
     }
@@ -377,6 +401,10 @@ public class BooleanCatheter {
     }
 
     public BooleanCatheter holdTill(int index) {
+        if (isEmpty()) {
+            return this;
+        }
+
         index = Math.min(index, this.targets.length);
 
         final boolean[] ts = this.targets;
@@ -396,6 +424,10 @@ public class BooleanCatheter {
     }
 
     public BooleanCatheter holdTill(final BooleanPredicate predicate) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final int index = findTill(predicate);
 
         final boolean[] ts = this.targets;
@@ -463,6 +495,10 @@ public class BooleanCatheter {
     }
 
     public BooleanCatheter waiveTill(final int index) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final boolean[] ts = this.targets;
         final boolean[] newDelegate;
         if (index >= ts.length) {
@@ -483,6 +519,10 @@ public class BooleanCatheter {
     }
 
     public BooleanCatheter waiveTill(final BooleanPredicate predicate) {
+        if (isEmpty()) {
+            return this;
+        }
+
         final int index = findTill(predicate);
 
         final boolean[] ts = this.targets;
