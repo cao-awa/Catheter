@@ -170,6 +170,10 @@ public class DoubleCatheter {
         return overallFilter((index, item) -> !predicate.test(item));
     }
 
+    public <X> DoubleCatheter discard(final Predicate<X> predicate, DoubleFunction<X> converter) {
+        return overallFilter((index, item) -> !predicate.test(converter.apply(item)));
+    }
+
     public DoubleCatheter discard(final double initializer, final BiDoublePredicate predicate) {
         return overallFilter((index, item) -> !predicate.test(item, initializer));
     }
@@ -179,6 +183,13 @@ public class DoubleCatheter {
             return this;
         }
         return discard(predicate);
+    }
+
+    public <X> DoubleCatheter orDiscard(final boolean succeed, final Predicate<X> predicate, DoubleFunction<X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return discard(predicate, converter);
     }
 
     public DoubleCatheter orDiscard(final boolean succeed, final double initializer, final BiDoublePredicate predicate) {
@@ -192,6 +203,10 @@ public class DoubleCatheter {
         return overallFilter((index, item) -> predicate.test(item));
     }
 
+    public <X> DoubleCatheter filter(final Predicate<X> predicate, DoubleFunction<X> converter) {
+        return overallFilter((index, item) -> predicate.test(converter.apply(item)));
+    }
+
     public DoubleCatheter filter(final double initializer, final BiDoublePredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item, initializer));
     }
@@ -201,6 +216,13 @@ public class DoubleCatheter {
             return this;
         }
         return filter(predicate);
+    }
+
+    public <X> DoubleCatheter orFilter(final boolean succeed, final Predicate<X> predicate, DoubleFunction<X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return filter(predicate, converter);
     }
 
     public DoubleCatheter orFilter(final boolean succeed, final double initializer, final BiDoublePredicate predicate) {

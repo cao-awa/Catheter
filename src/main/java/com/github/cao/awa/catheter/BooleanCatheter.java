@@ -167,8 +167,45 @@ public class BooleanCatheter {
         });
     }
 
+    public BooleanCatheter discard(final BooleanPredicate predicate) {
+        return overallFilter((index, item) -> !predicate.test(item));
+    }
+
+    public <X> BooleanCatheter discard(final Predicate<X> predicate, BooleanFunction<X> converter) {
+        return overallFilter((index, item) -> !predicate.test(converter.apply(item)));
+    }
+
+    public BooleanCatheter discard(final boolean initializer, final BiBooleanPredicate predicate) {
+        return overallFilter((index, item) -> !predicate.test(item, initializer));
+    }
+
+    public BooleanCatheter orDiscard(final boolean succeed, final BooleanPredicate predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discard(predicate);
+    }
+
+    public <X> BooleanCatheter orDiscard(final boolean succeed, final Predicate<X> predicate, BooleanFunction<X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return discard(predicate, converter);
+    }
+
+    public BooleanCatheter orDiscard(final boolean succeed, final boolean initializer, final BiBooleanPredicate predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discard(initializer, predicate);
+    }
+
     public BooleanCatheter filter(final BooleanPredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item));
+    }
+
+    public <X> BooleanCatheter filter(final Predicate<X> predicate, BooleanFunction<X> converter) {
+        return overallFilter((index, item) -> predicate.test(converter.apply(item)));
     }
 
     /**
@@ -239,6 +276,13 @@ public class BooleanCatheter {
             return this;
         }
         return filter(predicate);
+    }
+
+    public <X> BooleanCatheter orFilter(final boolean succeed, final Predicate<X> predicate, BooleanFunction<X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return filter(predicate, converter);
     }
 
     public BooleanCatheter orFilter(final boolean succeed, final boolean initializer, final BiBooleanPredicate predicate) {

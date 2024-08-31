@@ -170,6 +170,10 @@ public class LongCatheter {
         return overallFilter((index, item) -> !predicate.test(item));
     }
 
+    public <X> LongCatheter discard(final Predicate<X> predicate, LongFunction<X> converter) {
+        return overallFilter((index, item) -> !predicate.test(converter.apply(item)));
+    }
+
     public LongCatheter discard(final long initializer, final BiLongPredicate predicate) {
         return overallFilter((index, item) -> !predicate.test(item, initializer));
     }
@@ -179,6 +183,13 @@ public class LongCatheter {
             return this;
         }
         return discard(predicate);
+    }
+
+    public <X> LongCatheter orDiscard(final boolean succeed, final Predicate<X> predicate, LongFunction<X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return discard(predicate, converter);
     }
 
     public LongCatheter orDiscard(final boolean succeed, final long initializer, final BiLongPredicate predicate) {
@@ -192,6 +203,10 @@ public class LongCatheter {
         return overallFilter((index, item) -> predicate.test(item));
     }
 
+    public <X> LongCatheter filter(final Predicate<X> predicate, LongFunction<X> converter) {
+        return overallFilter((index, item) -> predicate.test(converter.apply(item)));
+    }
+
     public LongCatheter filter(final long initializer, final BiLongPredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item, initializer));
     }
@@ -201,6 +216,13 @@ public class LongCatheter {
             return this;
         }
         return filter(predicate);
+    }
+
+    public <X> LongCatheter orFilter(final boolean succeed, final Predicate<X> predicate, LongFunction<X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return filter(predicate, converter);
     }
 
     public LongCatheter orFilter(final boolean succeed, final long initializer, final BiLongPredicate predicate) {

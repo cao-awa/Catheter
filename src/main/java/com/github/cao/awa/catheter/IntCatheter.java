@@ -169,6 +169,10 @@ public class IntCatheter {
         return overallFilter((index, item) -> !predicate.test(item));
     }
 
+    public <X> IntCatheter discard(final Predicate<X> predicate, IntFunction<X> converter) {
+        return overallFilter((index, item) -> !predicate.test(converter.apply(item)));
+    }
+
     public IntCatheter discard(final int initializer, final BiIntegerPredicate predicate) {
         return overallFilter((index, item) -> !predicate.test(item, initializer));
     }
@@ -178,6 +182,13 @@ public class IntCatheter {
             return this;
         }
         return discard(predicate);
+    }
+
+    public <X> IntCatheter orDiscard(final boolean succeed, final Predicate<X> predicate, IntFunction<X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return discard(predicate, converter);
     }
 
     public IntCatheter orDiscard(final boolean succeed, final int initializer, final BiIntegerPredicate predicate) {
@@ -191,6 +202,10 @@ public class IntCatheter {
         return overallFilter((index, item) -> predicate.test(item));
     }
 
+    public <X> IntCatheter filter(final Predicate<X> predicate, IntFunction<X> converter) {
+        return overallFilter((index, item) -> predicate.test(converter.apply(item)));
+    }
+
     public IntCatheter filter(final int initializer, final BiIntegerPredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item, initializer));
     }
@@ -200,6 +215,13 @@ public class IntCatheter {
             return this;
         }
         return filter(predicate);
+    }
+
+    public <X> IntCatheter orFilter(final boolean succeed, final Predicate<X> predicate, IntFunction<X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return filter(predicate, converter);
     }
 
     public IntCatheter orFilter(final boolean succeed, final int initializer, final BiIntegerPredicate predicate) {

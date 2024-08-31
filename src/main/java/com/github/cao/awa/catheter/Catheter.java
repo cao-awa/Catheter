@@ -306,6 +306,10 @@ public class Catheter<T> {
         });
     }
 
+    public <X> Catheter<T> discard(final Predicate<X> predicate, Function<? super T, X> converter) {
+        return overallFilter((index, item) -> !predicate.test(converter.apply(item)));
+    }
+
     public Catheter<T> discard(final Predicate<? super T> predicate) {
         return overallFilter((index, item) -> !predicate.test(item));
     }
@@ -343,6 +347,23 @@ public class Catheter<T> {
     /**
      * Discarding items that matched given predicate.
      *
+     * @param succeed   Direct done discard? When succeed true, cancel filter instantly
+     * @param predicate The filter predicate
+     * @param converter The converter that make T vary to X
+     * @return This {@code Catheter<T>}
+     * @author 草
+     * @since 1.0.0
+     */
+    public <X> Catheter<T> orDiscard(final boolean succeed, final Predicate<X> predicate, Function<? super T, X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return discard(predicate, converter);
+    }
+
+    /**
+     * Discarding items that matched given predicate.
+     *
      * @param succeed     Direct done discard? When succeed true, cancel filter instantly
      * @param initializer A constant to passed to next parameter
      * @param predicate   The filter predicate
@@ -357,6 +378,10 @@ public class Catheter<T> {
             return this;
         }
         return discard(initializer, predicate);
+    }
+
+    public <X> Catheter<T> filter(final Predicate<X> predicate, Function<? super T, X> converter) {
+        return overallFilter((index, item) -> predicate.test(converter.apply(item)));
     }
 
     public Catheter<T> filter(final Predicate<? super T> predicate) {
@@ -454,6 +479,22 @@ public class Catheter<T> {
             return this;
         }
         return filter(predicate);
+    }
+
+    /**
+     * Holding items that matched given predicate.
+     *
+     * @param succeed   Direct done filter? When succeed true, cancel filter instantly
+     * @param predicate The filter predicate
+     * @return This {@code Catheter<T>}
+     * @author 草
+     * @since 1.0.0
+     */
+    public <X> Catheter<T> orFilter(final boolean succeed, final Predicate<X> predicate, Function<? super T, X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return filter(predicate, converter);
     }
 
     /**

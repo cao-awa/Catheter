@@ -166,8 +166,45 @@ public class ByteCatheter {
         });
     }
 
+    public ByteCatheter discard(final BytePredicate predicate) {
+        return overallFilter((index, item) -> !predicate.test(item));
+    }
+
+    public <X> ByteCatheter discard(final Predicate<X> predicate, ByteFunction<X> converter) {
+        return overallFilter((index, item) -> !predicate.test(converter.apply(item)));
+    }
+
+    public ByteCatheter discard(final byte initializer, final BiBytePredicate predicate) {
+        return overallFilter((index, item) -> !predicate.test(item, initializer));
+    }
+
+    public ByteCatheter orDiscard(final boolean succeed, final BytePredicate predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discard(predicate);
+    }
+
+    public <X> ByteCatheter orDiscard(final boolean succeed, final Predicate<X> predicate, ByteFunction<X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return discard(predicate, converter);
+    }
+
+    public ByteCatheter orDiscard(final boolean succeed, final byte initializer, final BiBytePredicate predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discard(initializer, predicate);
+    }
+
     public ByteCatheter filter(final BytePredicate predicate) {
         return overallFilter((index, item) -> predicate.test(item));
+    }
+
+    public <X> ByteCatheter filter(final Predicate<X> predicate, ByteFunction<X> converter) {
+        return overallFilter((index, item) -> predicate.test(converter.apply(item)));
     }
 
     /**
@@ -238,6 +275,13 @@ public class ByteCatheter {
             return this;
         }
         return filter(predicate);
+    }
+
+    public <X> ByteCatheter orFilter(final boolean succeed, final Predicate<X> predicate, ByteFunction<X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return filter(predicate, converter);
     }
 
     public ByteCatheter orFilter(final boolean succeed, final byte initializer, final BiBytePredicate predicate) {
