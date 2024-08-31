@@ -167,6 +167,51 @@ public class BooleanCatheter {
         });
     }
 
+    public BooleanCatheter discardTo(final BooleanPredicate predicate) {
+        BooleanCatheter result = BooleanCatheter.make();
+
+        overallFilter((index, item) -> !predicate.test(item), result::reset);
+
+        return result;
+    }
+
+    public <X> BooleanCatheter discardTo(final Predicate<X> predicate, BooleanFunction<X> converter) {
+        BooleanCatheter result = BooleanCatheter.make();
+
+        overallFilter((index, item) -> !predicate.test(converter.apply(item)), result::reset);
+
+        return result;
+    }
+
+    public BooleanCatheter discardTo(final boolean initializer, final BiBooleanPredicate predicate) {
+        BooleanCatheter result = BooleanCatheter.make();
+
+        overallFilter((index, item) -> !predicate.test(item, initializer), result::reset);
+
+        return result;
+    }
+
+    public BooleanCatheter orDiscardTo(final boolean succeed, final BooleanPredicate predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(predicate);
+    }
+
+    public <X> BooleanCatheter orDiscardTo(final boolean succeed, final Predicate<X> predicate, BooleanFunction<X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(predicate, converter);
+    }
+
+    public BooleanCatheter orDiscardTo(final boolean succeed, final boolean initializer, final BiBooleanPredicate predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(initializer, predicate);
+    }
+
     public BooleanCatheter discard(final BooleanPredicate predicate) {
         return overallFilter((index, item) -> !predicate.test(item));
     }
@@ -241,6 +286,19 @@ public class BooleanCatheter {
      * @since 1.0.0
      */
     public BooleanCatheter overallFilter(final IntegerAndBooleanPredicate predicate) {
+        return overallFilter(predicate, x -> {});
+    }
+
+    /**
+     * Holding items that matched given predicate.
+     *
+     * @param predicate The filter predicate
+     * @param discarding The discarded elements
+     * @return This {@code Catheter<T>}
+     * @author 草
+     * @since 1.0.0
+     */
+    public BooleanCatheter overallFilter(final IntegerAndBooleanPredicate predicate, Consumer<boolean[]> discarding) {
         if (isEmpty()) {
             return this;
         }
@@ -268,22 +326,25 @@ public class BooleanCatheter {
 
         // 创建新数组
         final boolean[] newDelegate = array(newDelegateSize);
+        final boolean[] discardingDelegate = array(length - newDelegateSize);
+        int discardingDelegateIndex = 0;
         int newDelegateIndex = 0;
         index = 0;
 
         // 遍历添加所有元素
         for (boolean isDeleting : deleting) {
             // deleting 值为 true 则为被筛选掉的，忽略
-            if (isDeleting) {
-                index++;
-                continue;
-            }
-
             final boolean t = ts[index++];
 
-            // 不为 true 则加入新数组
-            newDelegate[newDelegateIndex++] = t;
+            if (isDeleting) {
+                discardingDelegate[discardingDelegateIndex++] = t;
+            } else {
+                // 不为 true 则加入新数组
+                newDelegate[newDelegateIndex++] = t;
+            }
         }
+
+        discarding.accept(discardingDelegate);
 
         // 替换当前数组，不要创建新Catheter对象以节省性能
         this.targets = newDelegate;
@@ -1157,6 +1218,11 @@ public class BooleanCatheter {
 
     public BooleanCatheter reset() {
         this.targets = array(0);
+        return this;
+    }
+
+    public BooleanCatheter reset(boolean[] targets) {
+        this.targets = targets;
         return this;
     }
 

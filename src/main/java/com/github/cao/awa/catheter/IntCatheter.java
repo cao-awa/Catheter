@@ -165,6 +165,51 @@ public class IntCatheter {
         });
     }
 
+    public IntCatheter discardTo(final IntPredicate predicate) {
+        IntCatheter result = IntCatheter.make();
+
+        overallFilter((index, item) -> !predicate.test(item), result::reset);
+
+        return result;
+    }
+
+    public <X> IntCatheter discardTo(final Predicate<X> predicate, IntFunction<X> converter) {
+        IntCatheter result = IntCatheter.make();
+
+        overallFilter((index, item) -> !predicate.test(converter.apply(item)), result::reset);
+
+        return result;
+    }
+
+    public IntCatheter discardTo(final int initializer, final BiIntegerPredicate predicate) {
+        IntCatheter result = IntCatheter.make();
+
+        overallFilter((index, item) -> !predicate.test(item, initializer), result::reset);
+
+        return result;
+    }
+
+    public IntCatheter orDiscardTo(final boolean succeed, final IntPredicate predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(predicate);
+    }
+
+    public <X> IntCatheter orDiscardTo(final boolean succeed, final Predicate<X> predicate, IntFunction<X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(predicate, converter);
+    }
+
+    public IntCatheter orDiscardTo(final boolean succeed, final int initializer, final BiIntegerPredicate predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(initializer, predicate);
+    }
+
     public IntCatheter discard(final IntPredicate predicate) {
         return overallFilter((index, item) -> !predicate.test(item));
     }
@@ -264,6 +309,19 @@ public class IntCatheter {
      * @since 1.0.0
      */
     public IntCatheter overallFilter(final BiIntegerPredicate predicate) {
+        return overallFilter(predicate, x -> {});
+    }
+
+    /**
+     * Holding items that matched given predicate.
+     *
+     * @param predicate The filter predicate
+     * @param discarding The discarded elements
+     * @return This {@code Catheter<T>}
+     * @author 草
+     * @since 1.0.0
+     */
+    public IntCatheter overallFilter(final BiIntegerPredicate predicate, Consumer<int[]> discarding) {
         if (isEmpty()) {
             return this;
         }
@@ -271,7 +329,7 @@ public class IntCatheter {
         // 创建需要的变量和常量
         final int[] ts = this.targets;
         final int length = ts.length;
-        final int[] deleting = array(length);
+        final boolean[] deleting = new boolean[length];
         int newDelegateSize = length;
         int index = 0;
 
@@ -283,30 +341,33 @@ public class IntCatheter {
                 continue;
             }
 
-            // 不符合条件的设为null，后面会去掉
+            // 不符合条件的标记deleting为true，后面会去掉
             // 并且将新数组的容量减一
-            deleting[index++] = 1;
+            deleting[index++] = true;
             newDelegateSize--;
         }
 
         // 创建新数组
         final int[] newDelegate = array(newDelegateSize);
+        final int[] discardingDelegate = array(length - newDelegateSize);
+        int discardingDelegateIndex = 0;
         int newDelegateIndex = 0;
         index = 0;
 
         // 遍历所有元素
-        for (int isDeleting : deleting) {
-            // deleting 值为1则为被筛选掉的，忽略
-            if (isDeleting == 1) {
-                index++;
-                continue;
-            }
-
+        for (boolean isDeleting : deleting) {
+            // deleting 值为true则为被筛选掉的，加入discarding
             final int t = ts[index++];
 
-            // 不为1则加入新数组
-            newDelegate[newDelegateIndex++] = t;
+            if (isDeleting) {
+                discardingDelegate[discardingDelegateIndex++] = t;
+            } else {
+                // 不为true则加入新数组
+                newDelegate[newDelegateIndex++] = t;
+            }
         }
+
+        discarding.accept(discardingDelegate);
 
         // 替换当前数组，不要创建新Catheter对象以节省性能
         this.targets = newDelegate;
@@ -1157,6 +1218,11 @@ public class IntCatheter {
 
     public IntCatheter reset() {
         this.targets = array(0);
+        return this;
+    }
+
+    public IntCatheter reset(int[] targets) {
+        this.targets = targets;
         return this;
     }
 

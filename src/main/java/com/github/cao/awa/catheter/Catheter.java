@@ -338,6 +338,92 @@ public class Catheter<T> {
         });
     }
 
+    public <X> Catheter<T> discardTo(final Predicate<X> predicate, Function<? super T, X> converter) {
+        Catheter<T> result = Catheter.make();
+
+        overallFilter((index, item) -> !predicate.test(converter.apply(item)), result::reset);
+
+        return result;
+    }
+
+    public Catheter<T> discardTo(final Predicate<? super T> predicate) {
+        Catheter<T> result = Catheter.make();
+
+        overallFilter((index, item) -> !predicate.test(item), result::reset);
+
+        return result;
+    }
+
+    /**
+     * Discarding items that matched given predicate.
+     *
+     * @param initializer A constant to passed to next parameter
+     * @param predicate   The filter predicate
+     * @param <X>         Initializer constant
+     * @return This {@code Catheter<T>}
+     * @author 草二号机
+     * @since 1.0.0
+     */
+    public <X> Catheter<T> discardTo(final X initializer, final BiPredicate<? super T, X> predicate) {
+        Catheter<T> result = Catheter.make();
+
+        overallFilter((index, item) -> !predicate.test(item, initializer), result::reset);
+
+        return result;
+    }
+
+    /**
+     * Discarding items that matched given predicate.
+     *
+     * @param succeed   Direct done discard? When succeed true, cancel filter instantly
+     * @param predicate The filter predicate
+     * @return This {@code Catheter<T>}
+     * @author 草
+     * @since 1.0.0
+     */
+    public Catheter<T> orDiscardTo(final boolean succeed, final Predicate<? super T> predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(predicate);
+    }
+
+    /**
+     * Discarding items that matched given predicate.
+     *
+     * @param succeed   Direct done discard? When succeed true, cancel filter instantly
+     * @param predicate The filter predicate
+     * @param converter The converter that make T vary to X
+     * @return This {@code Catheter<T>}
+     * @author 草
+     * @since 1.0.0
+     */
+    public <X> Catheter<T> orDiscardTo(final boolean succeed, final Predicate<X> predicate, Function<? super T, X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(predicate, converter);
+    }
+
+    /**
+     * Discarding items that matched given predicate.
+     *
+     * @param succeed     Direct done discard? When succeed true, cancel filter instantly
+     * @param initializer A constant to passed to next parameter
+     * @param predicate   The filter predicate
+     * @param <X>         Initializer constant
+     * @return This {@code Catheter<T>}
+     * @author 草
+     * @author 草二号机
+     * @since 1.0.0
+     */
+    public <X> Catheter<T> orDiscardTo(final boolean succeed, final X initializer, final BiPredicate<? super T, X> predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(initializer, predicate);
+    }
+
     public <X> Catheter<T> discard(final Predicate<X> predicate, Function<? super T, X> converter) {
         return overallFilter((index, item) -> !predicate.test(converter.apply(item)));
     }
@@ -455,12 +541,26 @@ public class Catheter<T> {
      * @since 1.0.0
      */
     public Catheter<T> overallFilter(final IntegerAndExtraPredicate<? super T> predicate) {
+        return overallFilter(predicate, x -> {});
+    }
+
+    /**
+     * Holding items that matched given predicate.
+     *
+     * @param predicate The filter predicate
+     * @param discarding The discarded elements
+     * @return This {@code Catheter<T>}
+     * @author 草
+     * @since 1.0.0
+     */
+    public Catheter<T> overallFilter(final IntegerAndExtraPredicate<? super T> predicate, final Consumer<T[]> discarding) {
         if (isEmpty()) {
             return this;
         }
 
         // 创建需要的变量和常量
         final T[] ts = this.targets;
+        final boolean[] deleting = new boolean[ts.length];
         int newDelegateSize = ts.length;
         int index = 0;
 
@@ -474,24 +574,30 @@ public class Catheter<T> {
 
             // 不符合条件的设为null，后面会去掉
             // 并且将新数组的容量减一
-            ts[index++] = null;
+            deleting[index++] = true;
             newDelegateSize--;
         }
 
         // 创建新数组
         final T[] newDelegate = array(newDelegateSize);
+        final T[] discardingDelegate = array(ts.length - newDelegateSize);
         int newDelegateIndex = 0;
+        int discardingDelegateIndex = 0;
 
         // 遍历所有元素
-        for (T t : ts) {
-            // 为null则为被筛选掉的，忽略
-            if (t == null) {
-                continue;
+        index = 0;
+        for (boolean isDeleting : deleting) {
+            // deleting为true则为被筛选掉的，放入discarding
+            T t = ts[index++];
+            if (isDeleting) {
+                discardingDelegate[discardingDelegateIndex++] = t;
+            } else {
+                // 不为null则加入新数组
+                newDelegate[newDelegateIndex++] = t;
             }
-
-            // 不为null则加入新数组
-            newDelegate[newDelegateIndex++] = t;
         }
+
+        discarding.accept(discardingDelegate);
 
         // 替换当前数组，不要创建新Catheter对象以节省性能
         this.targets = newDelegate;
@@ -1493,6 +1599,11 @@ public class Catheter<T> {
 
     public Catheter<T> reset() {
         this.targets = array(0);
+        return this;
+    }
+
+    public Catheter<T> reset(T[] targets) {
+        this.targets = targets;
         return this;
     }
 

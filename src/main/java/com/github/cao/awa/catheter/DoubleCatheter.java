@@ -166,6 +166,51 @@ public class DoubleCatheter {
         });
     }
 
+    public DoubleCatheter discardTo(final DoublePredicate predicate) {
+        DoubleCatheter result = DoubleCatheter.make();
+
+        overallFilter((index, item) -> !predicate.test(item), result::reset);
+
+        return result;
+    }
+
+    public <X> DoubleCatheter discardTo(final Predicate<X> predicate, DoubleFunction<X> converter) {
+        DoubleCatheter result = DoubleCatheter.make();
+
+        overallFilter((index, item) -> !predicate.test(converter.apply(item)), result::reset);
+
+        return result;
+    }
+
+    public DoubleCatheter discardTo(final double initializer, final BiDoublePredicate predicate) {
+        DoubleCatheter result = DoubleCatheter.make();
+
+        overallFilter((index, item) -> !predicate.test(item, initializer), result::reset);
+
+        return result;
+    }
+
+    public DoubleCatheter orDiscardTo(final boolean succeed, final DoublePredicate predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(predicate);
+    }
+
+    public <X> DoubleCatheter orDiscardTo(final boolean succeed, final Predicate<X> predicate, DoubleFunction<X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(predicate, converter);
+    }
+
+    public DoubleCatheter orDiscardTo(final boolean succeed, final double initializer, final BiDoublePredicate predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(initializer, predicate);
+    }
+
     public DoubleCatheter discard(final DoublePredicate predicate) {
         return overallFilter((index, item) -> !predicate.test(item));
     }
@@ -265,6 +310,19 @@ public class DoubleCatheter {
      * @since 1.0.0
      */
     public DoubleCatheter overallFilter(final IntegerAndDoublePredicate predicate) {
+        return overallFilter(predicate, x -> {});
+    }
+
+    /**
+     * Holding items that matched given predicate.
+     *
+     * @param predicate The filter predicate
+     * @param discarding The discarded elements
+     * @return This {@code Catheter<T>}
+     * @author 草
+     * @since 1.0.0
+     */
+    public DoubleCatheter overallFilter(final IntegerAndDoublePredicate predicate, Consumer<double[]> discarding) {
         if (isEmpty()) {
             return this;
         }
@@ -272,7 +330,7 @@ public class DoubleCatheter {
         // 创建需要的变量和常量
         final double[] ts = this.targets;
         final int length = ts.length;
-        final double[] deleting = array(length);
+        final boolean[] deleting = new boolean[length];
         int newDelegateSize = length;
         int index = 0;
 
@@ -284,31 +342,33 @@ public class DoubleCatheter {
                 continue;
             }
 
-            // 不符合条件的标记，后面会去掉
+            // 不符合条件的标记deleting为true，后面会去掉
             // 并且将新数组的容量减一
-            deleting[index++] = 1;
+            deleting[index++] = true;
             newDelegateSize--;
         }
 
-
         // 创建新数组
         final double[] newDelegate = array(newDelegateSize);
+        final double[] discardingDelegate = array(length - newDelegateSize);
+        int discardingDelegateIndex = 0;
         int newDelegateIndex = 0;
         index = 0;
 
         // 遍历所有元素
-        for (double isDeleting : deleting) {
-            // deleting 值为1则为被筛选掉的，忽略
-            if (isDeleting == 1) {
-                index++;
-                continue;
-            }
-
+        for (boolean isDeleting : deleting) {
+            // deleting 值为true则为被筛选掉的，加入discarding
             final double t = ts[index++];
 
-            // 不为1则加入新数组
-            newDelegate[newDelegateIndex++] = t;
+            if (isDeleting) {
+                discardingDelegate[discardingDelegateIndex++] = t;
+            } else {
+                // 不为true则加入新数组
+                newDelegate[newDelegateIndex++] = t;
+            }
         }
+
+        discarding.accept(discardingDelegate);
 
         // 替换当前数组，不要创建新Catheter对象以节省性能
         this.targets = newDelegate;
@@ -1157,6 +1217,11 @@ public class DoubleCatheter {
 
     public DoubleCatheter reset() {
         this.targets = array(0);
+        return this;
+    }
+
+    public DoubleCatheter reset(double[] targets) {
+        this.targets = targets;
         return this;
     }
 

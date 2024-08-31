@@ -166,6 +166,51 @@ public class ByteCatheter {
         });
     }
 
+    public ByteCatheter discardTo(final BytePredicate predicate) {
+        ByteCatheter result = ByteCatheter.make();
+
+        overallFilter((index, item) -> !predicate.test(item), result::reset);
+
+        return result;
+    }
+
+    public <X> ByteCatheter discardTo(final Predicate<X> predicate, ByteFunction<X> converter) {
+        ByteCatheter result = ByteCatheter.make();
+
+        overallFilter((index, item) -> !predicate.test(converter.apply(item)), result::reset);
+
+        return result;
+    }
+
+    public ByteCatheter discardTo(final byte initializer, final BiBytePredicate predicate) {
+        ByteCatheter result = ByteCatheter.make();
+
+        overallFilter((index, item) -> !predicate.test(item, initializer), result::reset);
+
+        return result;
+    }
+
+    public ByteCatheter orDiscardTo(final boolean succeed, final BytePredicate predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(predicate);
+    }
+
+    public <X> ByteCatheter orDiscardTo(final boolean succeed, final Predicate<X> predicate, ByteFunction<X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(predicate, converter);
+    }
+
+    public ByteCatheter orDiscardTo(final boolean succeed, final byte initializer, final BiBytePredicate predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(initializer, predicate);
+    }
+
     public ByteCatheter discard(final BytePredicate predicate) {
         return overallFilter((index, item) -> !predicate.test(item));
     }
@@ -240,6 +285,19 @@ public class ByteCatheter {
      * @since 1.0.0
      */
     public ByteCatheter overallFilter(final IntegerAndBytePredicate predicate) {
+        return overallFilter(predicate, x -> {});
+    }
+
+    /**
+     * Holding items that matched given predicate.
+     *
+     * @param predicate The filter predicate
+     * @param discarding The discarded elements
+     * @return This {@code Catheter<T>}
+     * @author 草
+     * @since 1.0.0
+     */
+    public ByteCatheter overallFilter(final IntegerAndBytePredicate predicate, Consumer<byte[]> discarding) {
         if (isEmpty()) {
             return this;
         }
@@ -247,7 +305,7 @@ public class ByteCatheter {
         // 创建需要的变量和常量
         final byte[] ts = this.targets;
         final int length = ts.length;
-        final byte[] deleting = array(length);
+        final boolean[] deleting = new boolean[length];
         int newDelegateSize = length;
         int index = 0;
 
@@ -261,28 +319,31 @@ public class ByteCatheter {
 
             // 不符合条件的设为null，后面会去掉
             // 并且将新数组的容量减一
-            deleting[index++] = 1;
+            deleting[index++] = true;
             newDelegateSize--;
         }
 
         // 创建新数组
         final byte[] newDelegate = array(newDelegateSize);
+        final byte[] discardingDelegate = array(length - newDelegateSize);
+        int discardingDelegateIndex = 0;
         int newDelegateIndex = 0;
         index = 0;
 
         // 遍历所有元素
-        for (byte isDeleting : deleting) {
-            // deleting 值为1则为被筛选掉的，忽略
-            if (isDeleting == 1) {
-                index++;
-                continue;
-            }
-
+        for (boolean isDeleting : deleting) {
+            // deleting 值为true则为被筛选掉的，忽略
             final byte t = ts[index++];
 
-            // 不为1则加入新数组
-            newDelegate[newDelegateIndex++] = t;
+            if (isDeleting) {
+                discardingDelegate[discardingDelegateIndex++] = t;
+            } else {
+                // 不为true则加入新数组
+                newDelegate[newDelegateIndex++] = t;
+            }
         }
+
+        discarding.accept(discardingDelegate);
 
         // 替换当前数组，不要创建新Catheter对象以节省性能
         this.targets = newDelegate;
@@ -1159,6 +1220,11 @@ public class ByteCatheter {
 
     public ByteCatheter reset() {
         this.targets = array(0);
+        return this;
+    }
+
+    public ByteCatheter reset(byte[] targets) {
+        this.targets = targets;
         return this;
     }
 

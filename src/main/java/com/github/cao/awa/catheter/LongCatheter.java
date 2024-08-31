@@ -170,6 +170,51 @@ public class LongCatheter {
         });
     }
 
+    public LongCatheter discardTo(final LongPredicate predicate) {
+        LongCatheter result = LongCatheter.make();
+
+        overallFilter((index, item) -> !predicate.test(item), result::reset);
+
+        return result;
+    }
+
+    public <X> LongCatheter discardTo(final Predicate<X> predicate, LongFunction<X> converter) {
+        LongCatheter result = LongCatheter.make();
+
+        overallFilter((index, item) -> !predicate.test(converter.apply(item)), result::reset);
+
+        return result;
+    }
+
+    public LongCatheter discardTo(final long initializer, final BiLongPredicate predicate) {
+        LongCatheter result = LongCatheter.make();
+
+        overallFilter((index, item) -> !predicate.test(item, initializer), result::reset);
+
+        return result;
+    }
+
+    public LongCatheter orDiscardTo(final boolean succeed, final LongPredicate predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(predicate);
+    }
+
+    public <X> LongCatheter orDiscardTo(final boolean succeed, final Predicate<X> predicate, LongFunction<X> converter) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(predicate, converter);
+    }
+
+    public LongCatheter orDiscardTo(final boolean succeed, final long initializer, final BiLongPredicate predicate) {
+        if (succeed) {
+            return this;
+        }
+        return discardTo(initializer, predicate);
+    }
+
     public LongCatheter discard(final LongPredicate predicate) {
         return overallFilter((index, item) -> !predicate.test(item));
     }
@@ -269,6 +314,19 @@ public class LongCatheter {
      * @since 1.0.0
      */
     public LongCatheter overallFilter(final IntegerAndLongPredicate predicate) {
+        return overallFilter(predicate, x -> {});
+    }
+
+    /**
+     * Holding items that matched given predicate.
+     *
+     * @param predicate The filter predicate
+     * @param discarding The discarded elements
+     * @return This {@code Catheter<T>}
+     * @author 草
+     * @since 1.0.0
+     */
+    public LongCatheter overallFilter(final IntegerAndLongPredicate predicate, final Consumer<long[]> discarding) {
         if (isEmpty()) {
             return this;
         }
@@ -276,7 +334,7 @@ public class LongCatheter {
         // 创建需要的变量和常量
         final long[] ts = this.targets;
         final int length = ts.length;
-        final long[] deleting = array(length);
+        final boolean[] deleting = new boolean[length];
         int newDelegateSize = length;
         int index = 0;
 
@@ -290,28 +348,31 @@ public class LongCatheter {
 
             // 不符合条件的设为null，后面会去掉
             // 并且将新数组的容量减一
-            deleting[index++] = 1;
+            deleting[index++] = true;
             newDelegateSize--;
         }
 
         // 创建新数组
         final long[] newDelegate = array(newDelegateSize);
+        final long[] discardingDelegate = array(length - newDelegateSize);
         int newDelegateIndex = 0;
+        int discardingDelegateIndex = 0;
         index = 0;
 
         // 遍历所有元素
-        for (long isDeleting : deleting) {
-            // deleting 值为1则为被筛选掉的，忽略
-            if (isDeleting == 1) {
-                index++;
-                continue;
-            }
-
+        for (boolean isDeleting : deleting) {
             final long t = ts[index++];
 
-            // 不为1则加入新数组
-            newDelegate[newDelegateIndex++] = t;
+            // deleting 值为true则为被筛选掉的，忽略
+            if (isDeleting) {
+                discardingDelegate[discardingDelegateIndex++] = t;
+            } else {
+                // 不为1则加入新数组
+                newDelegate[newDelegateIndex++] = t;
+            }
         }
+
+        discarding.accept(discardingDelegate);
 
         // 替换当前数组，不要创建新Catheter对象以节省性能
         this.targets = newDelegate;
@@ -1213,6 +1274,11 @@ public class LongCatheter {
 
     public LongCatheter reset() {
         this.targets = array(0);
+        return this;
+    }
+
+    public LongCatheter reset(long[] targets) {
+        this.targets = targets;
         return this;
     }
 
