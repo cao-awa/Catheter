@@ -541,13 +541,14 @@ public class Catheter<T> {
      * @since 1.0.0
      */
     public Catheter<T> overallFilter(final IntegerAndExtraPredicate<? super T> predicate) {
-        return overallFilter(predicate, x -> {});
+        return overallFilter(predicate, x -> {
+        });
     }
 
     /**
      * Holding items that matched given predicate.
      *
-     * @param predicate The filter predicate
+     * @param predicate  The filter predicate
      * @param discarding The discarded elements
      * @return This {@code Catheter<T>}
      * @author 草
@@ -1176,10 +1177,27 @@ public class Catheter<T> {
         return this;
     }
 
+    public Optional<T> optionalFirst() {
+        if (this.targets.length > 0) {
+            return Optional.ofNullable(this.targets[0]);
+        }
+        return Optional.empty();
+    }
+
+    public Catheter<T> firstOrNull(final Consumer<T> consumer) {
+        consumer.accept(this.targets.length > 0 ? this.targets[0] : null);
+        return this;
+    }
+
     public Catheter<T> first(final Consumer<T> consumer) {
         if (this.targets.length > 0) {
             consumer.accept(this.targets[0]);
         }
+        return this;
+    }
+
+    public Catheter<T> tailOrNull(final Consumer<T> consumer) {
+        consumer.accept(this.targets.length > 0 ? this.targets[this.targets.length - 1] : null);
         return this;
     }
 
@@ -1188,6 +1206,13 @@ public class Catheter<T> {
             consumer.accept(this.targets[this.targets.length - 1]);
         }
         return this;
+    }
+
+    public Optional<T> optionalTail() {
+        if (this.targets.length > 0) {
+            return Optional.ofNullable(this.targets[this.targets.length - 1]);
+        }
+        return Optional.empty();
     }
 
     public Catheter<T> reverse() {
