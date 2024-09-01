@@ -15,6 +15,8 @@ import com.github.cao.awa.sinuatum.function.function.TriFunction;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 public class BooleanCatheter {
     private static final Random RANDOM = new Random();
@@ -1232,6 +1234,10 @@ public class BooleanCatheter {
 
     public boolean[] dArray() {
         return this.targets;
+    }
+
+    public Stream<Boolean> stream() {
+        return list().stream();
     }
 
     public List<Boolean> list() {

@@ -1290,6 +1290,10 @@ public class LongCatheter {
         return this.targets;
     }
 
+    public LongStream stream() {
+        return LongStream.of(array());
+    }
+
     public List<Long> list() {
         List<Long> list = new ArrayList<>();
         for (long l : array()) {

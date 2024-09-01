@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 public class Catheter<T> {
     private static final Random RANDOM = new Random();
@@ -1647,6 +1648,10 @@ public class Catheter<T> {
 
     public T[] dArray() {
         return this.targets;
+    }
+
+    public Stream<T> stream() {
+        return Arrays.stream(array());
     }
 
     public List<T> list() {

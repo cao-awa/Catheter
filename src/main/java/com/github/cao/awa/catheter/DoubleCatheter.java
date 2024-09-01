@@ -14,6 +14,8 @@ import com.github.cao.awa.sinuatum.function.function.TriFunction;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
+import java.util.stream.DoubleStream;
+import java.util.stream.LongStream;
 
 public class DoubleCatheter {
     private static final Random RANDOM = new Random();
@@ -1231,6 +1233,10 @@ public class DoubleCatheter {
 
     public double[] dArray() {
         return this.targets;
+    }
+
+    public DoubleStream stream() {
+        return DoubleStream.of(array());
     }
 
     public List<Double> list() {

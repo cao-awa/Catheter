@@ -13,6 +13,8 @@ import com.github.cao.awa.sinuatum.function.function.TriFunction;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 public class IntCatheter {
     private static final Random RANDOM = new Random();
@@ -1232,6 +1234,10 @@ public class IntCatheter {
 
     public int[] dArray() {
         return this.targets;
+    }
+
+    public IntStream stream() {
+        return IntStream.of(array());
     }
 
     public List<Integer> list() {
