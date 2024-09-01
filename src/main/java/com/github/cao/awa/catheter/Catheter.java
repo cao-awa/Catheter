@@ -1651,7 +1651,7 @@ public class Catheter<T> {
     }
 
     public Stream<T> stream() {
-        return Arrays.stream(array());
+        return Arrays.stream(safeArray());
     }
 
     public List<T> list() {
