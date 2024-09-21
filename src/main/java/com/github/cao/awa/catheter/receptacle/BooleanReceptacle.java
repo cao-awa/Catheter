@@ -15,6 +15,16 @@ public final class BooleanReceptacle {
         return new BooleanReceptacle(target);
     }
 
+    public BooleanReceptacle and(boolean target) {
+        this.target = this.target && target;
+        return this;
+    }
+
+    public BooleanReceptacle or(boolean target) {
+        this.target = this.target || target;
+        return this;
+    }
+
     public boolean get() {
         return this.target;
     }

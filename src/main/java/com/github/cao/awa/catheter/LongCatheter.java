@@ -315,13 +315,14 @@ public class LongCatheter {
      * @since 1.0.0
      */
     public LongCatheter overallFilter(final IntegerAndLongPredicate predicate) {
-        return overallFilter(predicate, x -> {});
+        return overallFilter(predicate, x -> {
+        });
     }
 
     /**
      * Holding items that matched given predicate.
      *
-     * @param predicate The filter predicate
+     * @param predicate  The filter predicate
      * @param discarding The discarded elements
      * @return This {@code Catheter<T>}
      * @author 草
@@ -568,8 +569,8 @@ public class LongCatheter {
 
     public boolean alternate(final boolean source, final BiLongPredicate maker) {
         BooleanReceptacle result = new BooleanReceptacle(source);
-        flock((older, newer) ->{
-            result.set(maker.test(older, newer));
+        flock((older, newer) -> {
+            result.and(maker.test(older, newer));
             return newer;
         });
         return result.get();

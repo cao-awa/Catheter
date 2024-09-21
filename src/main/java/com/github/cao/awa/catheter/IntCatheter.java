@@ -562,7 +562,7 @@ public class IntCatheter {
     public boolean alternate(final boolean source, final BiIntegerPredicate maker) {
         BooleanReceptacle result = new BooleanReceptacle(source);
         flock((older, newer) ->{
-            result.set(maker.test(older, newer));
+            result.and(maker.test(older, newer));
             return newer;
         });
         return result.get();

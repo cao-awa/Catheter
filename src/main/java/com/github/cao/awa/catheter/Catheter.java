@@ -864,7 +864,9 @@ public class Catheter<T> {
     public boolean alternate(final boolean source, final BiPredicate<T, T> maker) {
         BooleanReceptacle result = new BooleanReceptacle(source);
         flock((older, newer) ->{
-            result.set(maker.test(older, newer));
+            if (older != null) {
+                result.and(maker.test(older, newer));
+            }
             return newer;
         });
         return result.get();

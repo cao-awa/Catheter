@@ -565,7 +565,7 @@ public class ByteCatheter {
     public boolean alternate(final boolean source, final BiBytePredicate maker) {
         BooleanReceptacle result = new BooleanReceptacle(source);
         flock((older, newer) ->{
-            result.set(maker.test(older, newer));
+            result.and(maker.test(older, newer));
             return newer;
         });
         return result.get();

@@ -512,7 +512,7 @@ public class DoubleCatheter {
     public boolean alternate(final boolean source, final BiDoublePredicate maker) {
         BooleanReceptacle result = new BooleanReceptacle(source);
         flock((older, newer) ->{
-            result.set(maker.test(older, newer));
+            result.and(maker.test(older, newer));
             return newer;
         });
         return result.get();
