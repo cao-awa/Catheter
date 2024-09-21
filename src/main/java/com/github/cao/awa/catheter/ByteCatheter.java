@@ -4,6 +4,7 @@ import com.github.cao.awa.catheter.action.*;
 import com.github.cao.awa.catheter.matrix.MatrixFlockPos;
 import com.github.cao.awa.catheter.matrix.MatrixPos;
 import com.github.cao.awa.catheter.pair.IntegerAndBytePair;
+import com.github.cao.awa.catheter.receptacle.BooleanReceptacle;
 import com.github.cao.awa.catheter.receptacle.ByteReceptacle;
 import com.github.cao.awa.catheter.receptacle.IntegerReceptacle;
 import com.github.cao.awa.catheter.receptacle.Receptacle;
@@ -523,6 +524,25 @@ public class ByteCatheter {
         return this;
     }
 
+    public byte flock(final byte source, final BiByteToByteFunction maker) {
+        final byte[] ts = this.targets;
+        byte result = source;
+        for (byte b : ts) {
+            result = maker.applyAsByte(result, b);
+        }
+        return result;
+    }
+
+    public byte flock(final BiByteToByteFunction maker) {
+        final byte[] ts = this.targets;
+        final int length = ts.length;
+        byte result = length > 0 ? ts[0] : 0;
+        for (int i = 1; i < length; i++) {
+            result = maker.applyAsByte(result, ts[i]);
+        }
+        return result;
+    }
+
     public <X> X alternate(final X source, final BiFunction<X, Byte, X> maker) {
         X result = source;
         final byte[] ts = this.targets;
@@ -542,23 +562,23 @@ public class ByteCatheter {
         return this;
     }
 
-    public byte flock(final byte source, final BiByteToByteFunction maker) {
-        final byte[] ts = this.targets;
-        byte result = source;
-        for (byte b : ts) {
-            result = maker.applyAsByte(result, b);
-        }
-        return result;
+    public boolean alternate(final boolean source, final BiBytePredicate maker) {
+        BooleanReceptacle result = new BooleanReceptacle(source);
+        flock((older, newer) ->{
+            result.set(maker.test(older, newer));
+            return newer;
+        });
+        return result.get();
     }
 
-    public byte flock(final BiByteToByteFunction maker) {
-        final byte[] ts = this.targets;
-        final int length = ts.length;
-        byte result = length > 0 ? ts[0] : 0;
-        for (int i = 1; i < length; i++) {
-            result = maker.applyAsByte(result, ts[i]);
-        }
-        return result;
+    public ByteCatheter whenAlternate(final boolean source, final BiBytePredicate maker, BooleanConsumer consumer) {
+        consumer.accept(alternate(source, maker));
+        return this;
+    }
+
+    public ByteCatheter whenAlternate(BiBytePredicate maker, BooleanConsumer consumer) {
+        consumer.accept(alternate(false, maker));
+        return this;
     }
 
     public ByteCatheter waiveTill(final int index) {

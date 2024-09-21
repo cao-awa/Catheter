@@ -4,6 +4,7 @@ import com.github.cao.awa.catheter.action.*;
 import com.github.cao.awa.catheter.pair.IntegerAndLongPair;
 import com.github.cao.awa.catheter.matrix.MatrixFlockPos;
 import com.github.cao.awa.catheter.matrix.MatrixPos;
+import com.github.cao.awa.catheter.receptacle.BooleanReceptacle;
 import com.github.cao.awa.catheter.receptacle.IntegerReceptacle;
 import com.github.cao.awa.catheter.receptacle.LongReceptacle;
 import com.github.cao.awa.sinuatum.function.consumer.TriConsumer;
@@ -536,6 +537,16 @@ public class LongCatheter {
         return result;
     }
 
+    public long flock(final BiLongFunction maker) {
+        final long[] ts = this.targets;
+        final int length = ts.length;
+        long result = length > 0 ? ts[0] : 0;
+        for (int i = 1; i < length; i++) {
+            result = maker.apply(result, ts[i]);
+        }
+        return result;
+    }
+
     public <X> LongCatheter whenAlternate(final X source, final BiFunction<X, Long, X> maker, Consumer<X> consumer) {
         consumer.accept(alternate(source, maker));
         return this;
@@ -555,14 +566,23 @@ public class LongCatheter {
         return result;
     }
 
-    public long flock(final BiLongFunction maker) {
-        final long[] ts = this.targets;
-        final int length = ts.length;
-        long result = length > 0 ? ts[0] : 0;
-        for (int i = 1; i < length; i++) {
-            result = maker.apply(result, ts[i]);
-        }
-        return result;
+    public boolean alternate(final boolean source, final BiLongPredicate maker) {
+        BooleanReceptacle result = new BooleanReceptacle(source);
+        flock((older, newer) ->{
+            result.set(maker.test(older, newer));
+            return newer;
+        });
+        return result.get();
+    }
+
+    public LongCatheter whenAlternate(final boolean source, final BiLongPredicate maker, BooleanConsumer consumer) {
+        consumer.accept(alternate(source, maker));
+        return this;
+    }
+
+    public LongCatheter whenAlternate(BiLongPredicate maker, BooleanConsumer consumer) {
+        consumer.accept(alternate(false, maker));
+        return this;
     }
 
     public LongCatheter waiveTill(final int index) {

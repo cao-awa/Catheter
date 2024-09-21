@@ -4,6 +4,7 @@ import com.github.cao.awa.catheter.action.*;
 import com.github.cao.awa.catheter.matrix.MatrixFlockPos;
 import com.github.cao.awa.catheter.matrix.MatrixPos;
 import com.github.cao.awa.catheter.pair.IntegerAndDoublePair;
+import com.github.cao.awa.catheter.receptacle.BooleanReceptacle;
 import com.github.cao.awa.catheter.receptacle.DoubleReceptacle;
 import com.github.cao.awa.catheter.receptacle.Receptacle;
 import com.github.cao.awa.catheter.receptacle.IntegerReceptacle;
@@ -470,6 +471,25 @@ public class DoubleCatheter {
         return this;
     }
 
+    public double flock(final double source, final BiDoubleToDoubleFunction maker) {
+        final double[] ts = this.targets;
+        double result = source;
+        for (double d : ts) {
+            result = maker.applyAsDouble(result, d);
+        }
+        return result;
+    }
+
+    public double flock(final BiDoubleToDoubleFunction maker) {
+        final double[] ts = this.targets;
+        final int length = ts.length;
+        double result = length > 0 ? ts[0] : 0;
+        for (int i = 1; i < length; i++) {
+            result = maker.applyAsDouble(result, ts[i]);
+        }
+        return result;
+    }
+
     public <X> X alternate(final X source, final BiFunction<X, Double, X> maker) {
         final double[] ts = this.targets;
         X result = source;
@@ -489,23 +509,23 @@ public class DoubleCatheter {
         return this;
     }
 
-    public double flock(final double source, final BiDoubleToDoubleFunction maker) {
-        final double[] ts = this.targets;
-        double result = source;
-        for (double d : ts) {
-            result = maker.applyAsDouble(result, d);
-        }
-        return result;
+    public boolean alternate(final boolean source, final BiDoublePredicate maker) {
+        BooleanReceptacle result = new BooleanReceptacle(source);
+        flock((older, newer) ->{
+            result.set(maker.test(older, newer));
+            return newer;
+        });
+        return result.get();
     }
 
-    public double flock(final BiDoubleToDoubleFunction maker) {
-        final double[] ts = this.targets;
-        final int length = ts.length;
-        double result = length > 0 ? ts[0] : 0;
-        for (int i = 1; i < length; i++) {
-            result = maker.applyAsDouble(result, ts[i]);
-        }
-        return result;
+    public DoubleCatheter whenAlternate(final boolean source, final BiDoublePredicate maker, BooleanConsumer consumer) {
+        consumer.accept(alternate(source, maker));
+        return this;
+    }
+
+    public DoubleCatheter whenAlternate(BiDoublePredicate maker, BooleanConsumer consumer) {
+        consumer.accept(alternate(false, maker));
+        return this;
     }
 
     public DoubleCatheter waiveTill(final int index) {

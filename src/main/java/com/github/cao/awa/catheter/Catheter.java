@@ -4,6 +4,7 @@ import com.github.cao.awa.catheter.action.*;
 import com.github.cao.awa.catheter.matrix.MatrixFlockPos;
 import com.github.cao.awa.catheter.matrix.MatrixPos;
 import com.github.cao.awa.catheter.pair.IntegerAndExtraPair;
+import com.github.cao.awa.catheter.receptacle.BooleanReceptacle;
 import com.github.cao.awa.catheter.receptacle.Receptacle;
 import com.github.cao.awa.catheter.receptacle.IntegerReceptacle;
 import com.github.cao.awa.sinuatum.function.consumer.TriConsumer;
@@ -832,6 +833,15 @@ public class Catheter<T> {
         return this;
     }
 
+    public T flock(final T source, final BiFunction<T, T, T> maker) {
+        final T[] ts = this.targets;
+        T result = source;
+        for (T t : ts) {
+            result = maker.apply(result, t);
+        }
+        return result;
+    }
+
     public <X> X alternate(final X source, final BiFunction<X, T, X> maker) {
         final T[] ts = this.targets;
         X result = source;
@@ -851,13 +861,23 @@ public class Catheter<T> {
         return this;
     }
 
-    public T flock(final T source, final BiFunction<T, T, T> maker) {
-        final T[] ts = this.targets;
-        T result = source;
-        for (T t : ts) {
-            result = maker.apply(result, t);
-        }
-        return result;
+    public boolean alternate(final boolean source, final BiPredicate<T, T> maker) {
+        BooleanReceptacle result = new BooleanReceptacle(source);
+        flock((older, newer) ->{
+            result.set(maker.test(older, newer));
+            return newer;
+        });
+        return result.get();
+    }
+
+    public Catheter<T> whenAlternate(final boolean source, final BiPredicate<T, T> maker, BooleanConsumer consumer) {
+        consumer.accept(alternate(source, maker));
+        return this;
+    }
+
+    public Catheter<T> whenAlternate(BiPredicate<T, T> maker, BooleanConsumer consumer) {
+        consumer.accept(alternate(false, maker));
+        return this;
     }
 
     @Nullable

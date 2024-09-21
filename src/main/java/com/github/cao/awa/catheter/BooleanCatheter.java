@@ -519,6 +519,25 @@ public class BooleanCatheter {
         return this;
     }
 
+    public boolean flock(final boolean source, final BiBooleanPredicate maker) {
+        final boolean[] ts = this.targets;
+        boolean result = source;
+        for (boolean b : ts) {
+            result = maker.test(result, b);
+        }
+        return result;
+    }
+
+    public boolean flock(final BiBooleanPredicate maker) {
+        final boolean[] ts = this.targets;
+        final int length = ts.length;
+        boolean result = length > 0 && ts[0];
+        for (int i = 1; i < length; i++) {
+            result = maker.test(result, ts[i]);
+        }
+        return result;
+    }
+
     public <X> X alternate(final X source, final BiFunction<X, Boolean, X> maker) {
         final boolean[] ts = this.targets;
         X result = source;
@@ -538,23 +557,23 @@ public class BooleanCatheter {
         return this;
     }
 
-    public boolean flock(final boolean source, final BiBooleanPredicate maker) {
-        final boolean[] ts = this.targets;
-        boolean result = source;
-        for (boolean b : ts) {
-            result = maker.test(result, b);
-        }
-        return result;
+    public boolean alternate(final boolean source, final BiBooleanPredicate maker) {
+        BooleanReceptacle result = new BooleanReceptacle(source);
+        flock((older, newer) ->{
+            result.set(maker.test(older, newer));
+            return newer;
+        });
+        return result.get();
     }
 
-    public boolean flock(final BiBooleanPredicate maker) {
-        final boolean[] ts = this.targets;
-        final int length = ts.length;
-        boolean result = length > 0 && ts[0];
-        for (int i = 1; i < length; i++) {
-            result = maker.test(result, ts[i]);
-        }
-        return result;
+    public BooleanCatheter whenAlternate(final boolean source, final BiBooleanPredicate maker, BooleanConsumer consumer) {
+        consumer.accept(alternate(source, maker));
+        return this;
+    }
+
+    public BooleanCatheter whenAlternate(BiBooleanPredicate maker, BooleanConsumer consumer) {
+        consumer.accept(alternate(false, maker));
+        return this;
     }
 
     public BooleanCatheter waiveTill(final int index) {

@@ -4,6 +4,7 @@ import com.github.cao.awa.catheter.action.*;
 import com.github.cao.awa.catheter.matrix.MatrixFlockPos;
 import com.github.cao.awa.catheter.matrix.MatrixPos;
 import com.github.cao.awa.catheter.pair.IntegerPair;
+import com.github.cao.awa.catheter.receptacle.BooleanReceptacle;
 import com.github.cao.awa.catheter.receptacle.Receptacle;
 import com.github.cao.awa.catheter.receptacle.IntegerReceptacle;
 import com.github.cao.awa.sinuatum.function.consumer.TriConsumer;
@@ -520,6 +521,25 @@ public class IntCatheter {
         return this;
     }
 
+    public int flock(final int source, final BiIntegerToIntegerFunction maker) {
+        final int[] ts = this.targets;
+        int result = source;
+        for (int i : ts) {
+            result = maker.applyAsInt(result, i);
+        }
+        return result;
+    }
+
+    public int flock(final BiIntegerToIntegerFunction maker) {
+        final int[] ts = this.targets;
+        final int length = ts.length;
+        int result = length > 0 ? ts[0] : 0;
+        for (int i : ts) {
+            result = maker.applyAsInt(result, i);
+        }
+        return result;
+    }
+
     public <X> X alternate(final X source, final BiFunction<X, Integer, X> maker) {
         final int[] ts = this.targets;
         X result = source;
@@ -539,23 +559,23 @@ public class IntCatheter {
         return this;
     }
 
-    public int flock(final int source, final BiIntegerToIntegerFunction maker) {
-        final int[] ts = this.targets;
-        int result = source;
-        for (int i : ts) {
-            result = maker.applyAsInt(result, i);
-        }
-        return result;
+    public boolean alternate(final boolean source, final BiIntegerPredicate maker) {
+        BooleanReceptacle result = new BooleanReceptacle(source);
+        flock((older, newer) ->{
+            result.set(maker.test(older, newer));
+            return newer;
+        });
+        return result.get();
     }
 
-    public int flock(final BiIntegerToIntegerFunction maker) {
-        final int[] ts = this.targets;
-        final int length = ts.length;
-        int result = length > 0 ? ts[0] : 0;
-        for (int i : ts) {
-            result = maker.applyAsInt(result, i);
-        }
-        return result;
+    public IntCatheter whenAlternate(final boolean source, final BiIntegerPredicate maker, BooleanConsumer consumer) {
+        consumer.accept(alternate(source, maker));
+        return this;
+    }
+
+    public IntCatheter whenAlternate(BiIntegerPredicate maker, BooleanConsumer consumer) {
+        consumer.accept(alternate(false, maker));
+        return this;
     }
 
     public IntCatheter waiveTill(final int index) {
