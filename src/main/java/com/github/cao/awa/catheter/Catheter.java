@@ -1052,7 +1052,7 @@ public class Catheter<T> {
         return BooleanCatheter.of(array);
     }
 
-    public <X> Catheter<X> vary(final Function<T, X> handler) {
+    public <X> Catheter<X> varyTo(final Function<T, X> handler) {
         if (isEmpty()) {
             return Catheter.make();
         }
@@ -1597,7 +1597,7 @@ public class Catheter<T> {
 
         final int matrixEdge = width - 1;
 
-        return vary((T item) -> {
+        return varyTo((T item) -> {
             final int hValue = h.get();
             final int wValue = w.get();
 
