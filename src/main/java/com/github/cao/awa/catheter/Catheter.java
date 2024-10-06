@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
+import java.util.random.RandomGenerator;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
@@ -1638,6 +1639,27 @@ public class Catheter<T> {
 
     public Catheter<T> shuffle() {
         sort((t1, t2) -> RANDOM.nextInt());
+        return this;
+    }
+
+    public Catheter<T> shuffle(RandomGenerator random) {
+        sort((t1, t2) -> RANDOM.nextInt());
+        return this;
+    }
+
+    public Catheter<T> swapShuffle(RandomGenerator random) {
+        T[] elements = this.targets;
+        int i = elements.length;
+
+        for (int j = i; j > 1; --j) {
+            int swapTo = random.nextInt(j);
+            int swapFrom = j - 1;
+            T fromElement = elements[swapFrom];
+            T toElement = elements[swapTo];
+            elements[swapTo] = fromElement;
+            elements[swapFrom] = toElement;
+        }
+
         return this;
     }
 

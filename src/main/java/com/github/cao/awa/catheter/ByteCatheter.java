@@ -15,6 +15,7 @@ import com.github.cao.awa.sinuatum.function.function.TriFunction;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
+import java.util.random.RandomGenerator;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -1169,6 +1170,27 @@ public class ByteCatheter {
 
     public ByteCatheter shuffle() {
         sort((t1, t2) -> RANDOM.nextInt());
+        return this;
+    }
+
+    public ByteCatheter shuffle(RandomGenerator random) {
+        sort((t1, t2) -> RANDOM.nextInt());
+        return this;
+    }
+
+    public ByteCatheter swapShuffle(RandomGenerator random) {
+        byte[] elements = this.targets;
+        int i = elements.length;
+
+        for (int j = i; j > 1; --j) {
+            int swapTo = random.nextInt(j);
+            int swapFrom = j - 1;
+            byte fromElement = elements[swapFrom];
+            byte toElement = elements[swapTo];
+            elements[swapTo] = fromElement;
+            elements[swapFrom] = toElement;
+        }
+
         return this;
     }
 

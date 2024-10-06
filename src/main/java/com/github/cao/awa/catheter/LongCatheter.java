@@ -14,6 +14,7 @@ import com.github.cao.awa.sinuatum.function.function.TriFunction;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
+import java.util.random.RandomGenerator;
 import java.util.stream.LongStream;
 
 public class LongCatheter {
@@ -1170,6 +1171,27 @@ public class LongCatheter {
 
     public LongCatheter shuffle() {
         sort((t1, t2) -> RANDOM.nextInt());
+        return this;
+    }
+
+    public LongCatheter shuffle(RandomGenerator random) {
+        sort((t1, t2) -> RANDOM.nextInt());
+        return this;
+    }
+
+    public LongCatheter swapShuffle(RandomGenerator random) {
+        long[] elements = this.targets;
+        int i = elements.length;
+
+        for (int j = i; j > 1; --j) {
+            int swapTo = random.nextInt(j);
+            int swapFrom = j - 1;
+            long fromElement = elements[swapFrom];
+            long toElement = elements[swapTo];
+            elements[swapTo] = fromElement;
+            elements[swapFrom] = toElement;
+        }
+
         return this;
     }
 

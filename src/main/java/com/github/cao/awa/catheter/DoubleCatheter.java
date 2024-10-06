@@ -15,6 +15,7 @@ import com.github.cao.awa.sinuatum.function.function.TriFunction;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
+import java.util.random.RandomGenerator;
 import java.util.stream.DoubleStream;
 import java.util.stream.LongStream;
 
@@ -1143,6 +1144,27 @@ public class DoubleCatheter {
 
     public DoubleCatheter shuffle() {
         sort((t1, t2) -> RANDOM.nextInt());
+        return this;
+    }
+
+    public DoubleCatheter shuffle(RandomGenerator random) {
+        sort((t1, t2) -> RANDOM.nextInt());
+        return this;
+    }
+
+    public DoubleCatheter swapShuffle(RandomGenerator random) {
+        double[] elements = this.targets;
+        int i = elements.length;
+
+        for (int j = i; j > 1; --j) {
+            int swapTo = random.nextInt(j);
+            int swapFrom = j - 1;
+            double fromElement = elements[swapFrom];
+            double toElement = elements[swapTo];
+            elements[swapTo] = fromElement;
+            elements[swapFrom] = toElement;
+        }
+
         return this;
     }
 
