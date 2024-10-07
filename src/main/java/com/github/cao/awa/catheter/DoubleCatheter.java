@@ -1168,6 +1168,10 @@ public class DoubleCatheter {
         return this;
     }
 
+    public boolean has(double target) {
+        return hasAny(t -> t == target);
+    }
+
     public boolean isPresent() {
         return count() > 0;
     }

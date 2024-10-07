@@ -1195,6 +1195,10 @@ public class LongCatheter {
         return this;
     }
 
+    public boolean has(long target) {
+        return hasAny(t -> t == target);
+    }
+
     public LongCatheter dump() {
         return new LongCatheter(array());
     }

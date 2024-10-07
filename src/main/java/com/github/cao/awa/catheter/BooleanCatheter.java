@@ -790,6 +790,26 @@ public class BooleanCatheter {
         return this;
     }
 
+    public boolean hasTrue() {
+        final boolean[] ts = this.targets;
+        for (boolean b : ts) {
+            if (b) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasFalse() {
+        final boolean[] ts = this.targets;
+        for (boolean b : ts) {
+            if (!b) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean hasAny(final BooleanPredicate predicate) {
         final boolean[] ts = this.targets;
         for (boolean b : ts) {
@@ -1188,6 +1208,13 @@ public class BooleanCatheter {
         }
 
         return this;
+    }
+
+    public boolean has(boolean target) {
+        if (target) {
+            return hasTrue();
+        }
+        return hasFalse();
     }
 
     public BooleanCatheter dump() {

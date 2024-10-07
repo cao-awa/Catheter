@@ -1187,6 +1187,10 @@ public class IntCatheter {
         return this;
     }
 
+    public boolean has(int target) {
+        return hasAny(t -> t == target);
+    }
+
     public IntCatheter dump() {
         return new IntCatheter(array());
     }

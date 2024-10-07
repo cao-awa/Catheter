@@ -1663,6 +1663,10 @@ public class Catheter<T> {
         return this;
     }
 
+    public boolean has(T target) {
+        return hasAny(t -> Objects.equals(t, target));
+    }
+
     public Catheter<T> dump() {
         return new Catheter<>(array());
     }

@@ -1194,6 +1194,10 @@ public class ByteCatheter {
         return this;
     }
 
+    public boolean has(byte target) {
+        return hasAny(t -> t == target);
+    }
+
     public ByteCatheter dump() {
         return new ByteCatheter(array());
     }
