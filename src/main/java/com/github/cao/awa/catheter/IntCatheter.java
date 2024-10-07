@@ -1191,6 +1191,14 @@ public class IntCatheter {
         return hasAny(t -> t == target);
     }
 
+    public boolean not(int target) {
+        return !has(target);
+    }
+
+    public IntCatheter merge(IntCatheter other) {
+        return append(other.filter(this::not));
+    }
+
     public IntCatheter dump() {
         return new IntCatheter(array());
     }

@@ -1198,6 +1198,14 @@ public class ByteCatheter {
         return hasAny(t -> t == target);
     }
 
+    public boolean not(byte target) {
+        return !has(target);
+    }
+
+    public ByteCatheter merge(ByteCatheter other) {
+        return append(other.filter(this::not));
+    }
+
     public ByteCatheter dump() {
         return new ByteCatheter(array());
     }

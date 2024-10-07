@@ -1667,6 +1667,14 @@ public class Catheter<T> {
         return hasAny(t -> Objects.equals(t, target));
     }
 
+    public boolean not(T target) {
+        return !has(target);
+    }
+
+    public Catheter<T> merge(Catheter<T> other) {
+        return append(other.filter(this::not));
+    }
+
     public Catheter<T> dump() {
         return new Catheter<>(array());
     }

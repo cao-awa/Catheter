@@ -1217,6 +1217,33 @@ public class BooleanCatheter {
         return hasFalse();
     }
 
+    public boolean not(boolean target) {
+        return !has(target);
+    }
+
+    public BooleanCatheter merge(BooleanCatheter other) {
+        boolean otherHasTrue = other.hasTrue();
+        boolean otherHasFalse = other.hasFalse();
+
+        if (!hasTrue() && otherHasTrue) {
+            return append(true);
+        }
+
+        if (!hasFalse() && otherHasFalse) {
+            return append(false);
+        }
+
+        if (otherHasTrue) {
+            return append(true);
+        }
+
+        if (otherHasFalse) {
+            return append(false);
+        }
+
+        return this;
+    }
+
     public BooleanCatheter dump() {
         return new BooleanCatheter(array());
     }

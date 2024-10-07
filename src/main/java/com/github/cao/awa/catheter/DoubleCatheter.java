@@ -1172,6 +1172,14 @@ public class DoubleCatheter {
         return hasAny(t -> t == target);
     }
 
+    public boolean not(double target) {
+        return !has(target);
+    }
+
+    public DoubleCatheter merge(DoubleCatheter other) {
+        return append(other.filter(this::not));
+    }
+
     public boolean isPresent() {
         return count() > 0;
     }

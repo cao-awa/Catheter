@@ -1199,6 +1199,14 @@ public class LongCatheter {
         return hasAny(t -> t == target);
     }
 
+    public boolean not(long target) {
+        return !has(target);
+    }
+
+    public LongCatheter merge(LongCatheter other) {
+        return append(other.filter(this::not));
+    }
+
     public LongCatheter dump() {
         return new LongCatheter(array());
     }
