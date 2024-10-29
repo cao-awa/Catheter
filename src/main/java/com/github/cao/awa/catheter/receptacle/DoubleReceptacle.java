@@ -23,4 +23,9 @@ public final class DoubleReceptacle {
         this.target = target;
         return this;
     }
+
+    public DoubleReceptacle set(DoubleReceptacle target) {
+        this.target = target.get();
+        return this;
+    }
 }

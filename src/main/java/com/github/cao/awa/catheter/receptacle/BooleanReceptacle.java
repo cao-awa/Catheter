@@ -33,4 +33,9 @@ public final class BooleanReceptacle {
         this.target = target;
         return this;
     }
+
+    public BooleanReceptacle set(BooleanReceptacle target) {
+        this.target = target.get();
+        return this;
+    }
 }

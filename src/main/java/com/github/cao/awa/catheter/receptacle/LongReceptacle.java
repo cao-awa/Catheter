@@ -23,4 +23,9 @@ public final class LongReceptacle {
         this.target = target;
         return this;
     }
+
+    public LongReceptacle set(LongReceptacle target) {
+        this.target = target.get();
+        return this;
+    }
 }

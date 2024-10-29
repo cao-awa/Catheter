@@ -32,4 +32,9 @@ public final class Receptacle<T> {
         this.target = target;
         return this;
     }
+
+    public Receptacle<T> set(Receptacle<T> target) {
+        this.target = target.get();
+        return this;
+    }
 }

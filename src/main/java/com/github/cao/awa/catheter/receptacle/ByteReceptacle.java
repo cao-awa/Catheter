@@ -23,4 +23,9 @@ public final class ByteReceptacle {
         this.target = target;
         return this;
     }
+
+    public ByteReceptacle set(ByteReceptacle target) {
+        this.target = target.get();
+        return this;
+    }
 }

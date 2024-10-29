@@ -23,4 +23,9 @@ public final class IntegerReceptacle {
         this.target = target;
         return this;
     }
+
+    public IntegerReceptacle set(IntegerReceptacle target) {
+        this.target = target.get();
+        return this;
+    }
 }
