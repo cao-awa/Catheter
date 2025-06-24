@@ -43,7 +43,7 @@ dependencies {
 
     implementation 'org.jetbrains:annotations:24.1.0'
 
-    implementation 'com.github.cao.awa:sinuatum:1.0.10'
+    implementation 'com.github.cao.awa:sinuatum:1.0.17'
 }
 
 test {
