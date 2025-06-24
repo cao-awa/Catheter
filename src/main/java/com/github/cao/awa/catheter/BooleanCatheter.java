@@ -9,8 +9,8 @@ import com.github.cao.awa.catheter.receptacle.BooleanReceptacle;
 import com.github.cao.awa.catheter.receptacle.IntegerReceptacle;
 import com.github.cao.awa.catheter.receptacle.Receptacle;
 import com.github.cao.awa.sinuatum.function.consumer.TriConsumer;
-import com.github.cao.awa.sinuatum.function.function.QuinFunction;
-import com.github.cao.awa.sinuatum.function.function.TriFunction;
+import com.github.cao.awa.sinuatum.function.QuinFunction;
+import com.github.cao.awa.sinuatum.function.TriFunction;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;

@@ -3,6 +3,9 @@ plugins {
     id 'maven-publish'
 }
 
+group = "$project.group_id"
+version = "$project.version_name"
+
 publishing {
     repositories {
         maven {
@@ -37,20 +40,26 @@ repositories {
     }
 }
 
+configurations {
+    create("shadow")
+    implementation.extendsFrom(shadow)
+}
+
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 
-    implementation 'org.jetbrains:annotations:24.1.0'
+    shadow 'org.jetbrains:annotations:24.1.0'
 
-    implementation 'com.github.cao.awa:sinuatum:1.0.17'
+    shadow 'com.github.cao.awa:sinuatum:1.0.17'
 }
 
 test {
     useJUnitPlatform()
 }
 
-task sourceJar(type: Jar, dependsOn: classes) {
+tasks.register('sourceJar', Jar) {
+    dependsOn classes
     archiveClassifier = 'sources'
     from sourceSets.main.allSource
 }
