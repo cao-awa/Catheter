@@ -1713,8 +1713,8 @@ public class Catheter<T> {
         return result;
     }
 
-    public <R> R varyMap(R identity, Consumer<T> mapper) {
-        each(mapper);
+    public <R> R varyMap(R identity, BiConsumer<R, T> mapper) {
+        each(value -> mapper.accept(identity, value));
         return identity;
     }
 
@@ -1774,7 +1774,17 @@ public class Catheter<T> {
     }
 
     public static void main(String[] args) {
-        test3();
+        test4();
+    }
+
+    public static void test4() {
+        Map<String, String> identity = new HashMap<>();
+
+        Catheter<Integer> catheter = Catheter.make(1,2,3,4,5,6,7,8,9,10);
+
+        catheter.varyMap(identity, (i,value) -> i.put(String.valueOf(value), String.valueOf(value)));
+
+        System.out.println(identity);
     }
 
     public static void test3() {
