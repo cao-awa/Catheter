@@ -16,6 +16,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 import java.util.random.RandomGenerator;
+import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
@@ -1664,6 +1665,54 @@ public class Catheter<T> {
         return this;
     }
 
+    public static  <R> Catheter<R> combineSet(Catheter<Set<R>> catheter) {
+        AtomicInteger size = new AtomicInteger();
+        catheter.each(set -> size.addAndGet(set.size()));
+
+        Catheter<R> result = Catheter.makeCapacity(size.get());
+
+        AtomicInteger index = new AtomicInteger();
+        catheter.each(set -> {
+            for (R r : set) {
+                result.fetch(index.getAndAdd(1), r);
+            }
+        });
+
+        return result;
+    }
+
+    public static  <R> Catheter<R> combineList(Catheter<List<R>> catheter) {
+        AtomicInteger size = new AtomicInteger();
+        catheter.each(set -> size.addAndGet(set.size()));
+
+        Catheter<R> result = Catheter.makeCapacity(size.get());
+
+        AtomicInteger index = new AtomicInteger();
+        catheter.each(set -> {
+            for (R r : set) {
+                result.fetch(index.getAndAdd(1), r);
+            }
+        });
+
+        return result;
+    }
+
+    public static  <R> Catheter<R> combineCollection(Catheter<Collection<R>> catheter) {
+        AtomicInteger size = new AtomicInteger();
+        catheter.each(set -> size.addAndGet(set.size()));
+
+        Catheter<R> result = Catheter.makeCapacity(size.get());
+
+        AtomicInteger index = new AtomicInteger();
+        catheter.each(set -> {
+            for (R r : set) {
+                result.fetch(index.getAndAdd(1), r);
+            }
+        });
+
+        return result;
+    }
+
     public boolean has(T target) {
         return hasAny(t -> Objects.equals(t, target));
     }
@@ -1720,7 +1769,36 @@ public class Catheter<T> {
     }
 
     public static void main(String[] args) {
-        test2();
+        test3();
+    }
+
+    public static void test3() {
+        Catheter<Set<String>> catheter = Catheter.makeCapacity(5);
+
+        Set<String> set1 = new HashSet<>();
+        IntStream.of(1,2,3,4,5,6).mapToObj(String::valueOf).forEach(set1::add);
+
+        Set<String> set2 = new HashSet<>();
+        IntStream.of(11,22,33,44,55,66).mapToObj(String::valueOf).forEach(set2::add);
+
+        Set<String> set3 = new HashSet<>();
+        IntStream.of(111,222,333,444,555,666).mapToObj(String::valueOf).forEach(set3::add);
+
+        Set<String> set4 = new HashSet<>();
+        IntStream.of(1111,2222,3333,4444,5555,6666).mapToObj(String::valueOf).forEach(set4::add);
+
+        Set<String> set5 = new HashSet<>();
+        IntStream.of(11111,22222,33333,44444,55555,66666).mapToObj(String::valueOf).forEach(set5::add);
+
+        catheter.fetch(0, set1);
+        catheter.fetch(1, set2);
+        catheter.fetch(2, set3);
+        catheter.fetch(3, set4);
+        catheter.fetch(4, set5);
+
+        Catheter<String> combinedCather = Catheter.combineSet(catheter);
+
+        combinedCather.each(System.out::println);
     }
 
     public static void test2() {
