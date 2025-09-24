@@ -1713,6 +1713,11 @@ public class Catheter<T> {
         return result;
     }
 
+    public <R> R varyMap(R identity, Consumer<T> mapper) {
+        each(mapper);
+        return identity;
+    }
+
     public boolean has(T target) {
         return hasAny(t -> Objects.equals(t, target));
     }
