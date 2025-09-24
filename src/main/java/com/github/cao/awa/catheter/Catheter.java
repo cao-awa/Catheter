@@ -677,7 +677,7 @@ public class Catheter<T> {
     /**
      * Holding items that matched given predicate.
      *
-     * @param initializer A constant to passed to next parameter
+     * @param initializer A constant to passed to the next parameter
      * @param predicate   The filter predicate
      * @param <X>         Initializer constant
      * @return This {@code Catheter<T>}
@@ -736,7 +736,7 @@ public class Catheter<T> {
      * Holding items that matched given predicate.
      *
      * @param succeed     Direct done filter? When succeed true, cancel filter instantly
-     * @param initializer A constant to passed to next parameter
+     * @param initializer A constant to passed to the next parameter
      * @param predicate   The filter predicate
      * @param <X>         Initializer constant
      * @return This {@code Catheter<T>}
@@ -983,7 +983,7 @@ public class Catheter<T> {
         return this;
     }
 
-    public IntCatheter vary(final ToIntFunction<T> handler) {
+    public IntCatheter varyInt(final ToIntFunction<T> handler) {
         if (isEmpty()) {
             return IntCatheter.make();
         }
@@ -997,7 +997,7 @@ public class Catheter<T> {
         return IntCatheter.of(array);
     }
 
-    public LongCatheter vary(final ToLongFunction<T> handler) {
+    public LongCatheter varyLong(final ToLongFunction<T> handler) {
         if (isEmpty()) {
             return LongCatheter.make();
         }
@@ -1011,7 +1011,7 @@ public class Catheter<T> {
         return LongCatheter.of(array);
     }
 
-    public DoubleCatheter vary(final ToDoubleFunction<T> handler) {
+    public DoubleCatheter varyDouble(final ToDoubleFunction<T> handler) {
         if (isEmpty()) {
             return DoubleCatheter.make();
         }
@@ -1025,7 +1025,7 @@ public class Catheter<T> {
         return DoubleCatheter.of(array);
     }
 
-    public ByteCatheter vary(final ToByteFunction<T> handler) {
+    public ByteCatheter varyByte(final ToByteFunction<T> handler) {
         if (isEmpty()) {
             return ByteCatheter.make();
         }
@@ -1039,7 +1039,22 @@ public class Catheter<T> {
         return ByteCatheter.of(array);
     }
 
-    public BooleanCatheter vary(final Predicate<? super T> handler) {
+    public <X> Catheter<X> vary(final Function<T, X> handler, IntFunction<X[]> arrayGenerator) {
+        if (isEmpty()) {
+            return Catheter.make();
+        }
+
+        final T[] ts = this.targets;
+        final X[] array = arrayGenerator.apply(ts.length);
+        int index = 0;
+        for (T t : ts) {
+            array[index++] = handler.apply(t);
+        }
+        return Catheter.of(array).arrayGenerator(arrayGenerator);
+    }
+
+
+    public BooleanCatheter varyBoolean(final Predicate<? super T> handler) {
         if (isEmpty()) {
             return BooleanCatheter.make();
         }
@@ -1065,20 +1080,6 @@ public class Catheter<T> {
             array[index++] = handler.apply(t);
         }
         return Catheter.of(array);
-    }
-
-    public <X> Catheter<X> vary(final Function<T, X> handler, IntFunction<X[]> arrayGenerator) {
-        if (isEmpty()) {
-            return Catheter.make();
-        }
-
-        final T[] ts = this.targets;
-        final X[] array = arrayGenerator.apply(ts.length);
-        int index = 0;
-        for (T t : ts) {
-            array[index++] = handler.apply(t);
-        }
-        return Catheter.of(array).arrayGenerator(arrayGenerator);
     }
 
     public Catheter<T> whenAny(final Predicate<? super T> predicate, final Consumer<T> action) {
