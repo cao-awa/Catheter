@@ -61,3 +61,6 @@ tasks.register('sourceJar', Jar) {
 artifacts {
     archives sourceJar
 }
+
+sourceCompatibility = JavaVersion.VERSION_21
+targetCompatibility = JavaVersion.VERSION_21
